@@ -1,33 +1,34 @@
 import React, { useState } from 'react';
-import Navbar  from './components/layout/Navbar';
-import Footer  from './components/layout/Footer';
-import Hero    from './components/sections/Hero';
-import { HowItWorks, Features, Testimonials, CTA } from './components/sections/Sections';
-import Modal   from './components/modal/Modal';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import HomePage    from './pages/HomePage';
+import Modal       from './components/modal/Modal';
 
 export default function App() {
-  const [modal, setModal] = useState(null); // null | 'login' | 'signup'
+  const [modal, setModal] = useState(null);
 
   return (
-    <div>
-      <Navbar
-        onLogin={()  => setModal('login')}
-        onSignup={() => setModal('signup')}
-      />
+    <BrowserRouter>
+      <Routes>
+        {/* Route 1 : La Landing Page complète */}
+        <Route 
+          path="/" 
+          element={
+            <LandingPage 
+              onLogin={() => setModal('login')} 
+              onSignup={() => setModal('signup')} 
+            />
+          } 
+        />
 
-      <main>
-        <Hero     onSignup={() => setModal('signup')} />
-        <HowItWorks />
-        <Features />
-        <Testimonials />
-        <CTA onSignup={() => setModal('signup')} />
-      </main>
+        {/* Route 2 : La page Home complètement séparée */}
+        <Route path="/home" element={<HomePage />} />
+      </Routes>
 
-      <Footer />
-
+      {/* Le Modal reste global pour s'afficher par-dessus la Landing */}
       {modal && (
         <Modal mode={modal} onClose={() => setModal(null)} />
       )}
-    </div>
+    </BrowserRouter>
   );
 }

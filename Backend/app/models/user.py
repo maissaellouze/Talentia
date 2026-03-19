@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from app.database import Base
-
+from sqlalchemy.orm import relationship  # <--- ADD THIS IMPORT
 class User(Base):
 
     __tablename__ = "users"
@@ -13,3 +13,5 @@ class User(Base):
 
     role = Column(String)
     # student / company / admin
+
+student = relationship("Student", back_populates="user", uselist=False)

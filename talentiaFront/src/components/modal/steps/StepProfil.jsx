@@ -2,17 +2,18 @@ import React from 'react';
 import Field from '../../ui/Field';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
-import { formatMois } from '../../../utils/experience';
 
 export default function StepProfil({ data, onChange, totalMois }) {
   const cards = [
-    { label: 'Niveau',     value: data.niveau },
-    { label: 'Université', value: 'ESPRIT Tunis' },
-    { label: 'Langues',    value: '3 détectées' },
-    { label: 'Expérience', value: `${totalMois} mois` },
+    { label: 'Niveau',      value: data.niveau      || '—' },
+    { label: 'Université',  value: data.universite   || '—' },  // ← dynamique
+    { label: 'Filière',     value: data.filiere      || '—' },
+    { label: 'Expérience',  value: `${totalMois || 0} mois` },
   ];
+
   return (
     <div>
+      {/* Cartes résumé */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: '1.5rem' }}>
         {cards.map((c) => (
           <div key={c.label} style={{ background: '#fdfbf0', border: '1px solid #e8d88a', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
@@ -42,11 +43,8 @@ export default function StepProfil({ data, onChange, totalMois }) {
 
       <Field label="Expérience totale" badge={{ type: 'ai', label: 'IA · calculée' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Input ai value={totalMois} readOnly style={{ width: 80, textAlign: 'center' }} />
+          <Input ai value={totalMois || 0} readOnly style={{ width: 80, textAlign: 'center' }} />
           <span style={{ fontSize: 13, color: '#6b7280' }}>mois</span>
-          <span style={{ fontSize: 12, color: '#b8960c', background: '#fdfbf0', border: '1px solid #e8d88a', borderRadius: 6, padding: '3px 10px' }}>
-            ≈ {formatMois(totalMois)}
-          </span>
         </div>
       </Field>
     </div>

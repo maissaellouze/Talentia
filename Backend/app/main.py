@@ -2,9 +2,6 @@ import fastapi
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-
-# Importation de tous les modèles
-# CRUCIAL : SQLAlchemy doit voir ces imports pour créer les tables
 from app.models.user import User
 from app.models.student import Student
 from app.models.company import Company
@@ -16,7 +13,7 @@ from app.models.education import Education
 from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
-
+from app.models.preference import Preference
 # Importation des routers
 from app.routers import auth
 
@@ -27,16 +24,16 @@ app = fastapi.FastAPI(
     version="1.0.0"
 )
 
-# Middleware CORS (utile si tu as un frontend React/Vue qui appelle l'API)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Remplace par ton domaine frontend en production
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Création automatique des tables dans PostgreSQL
+#Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 # Inclusion des routes

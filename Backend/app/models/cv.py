@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, LargeBinary, String, ForeignKey
 from app.database import Base
 
 class CV(Base):
@@ -12,5 +12,7 @@ class CV(Base):
     title = Column(String)
 
     language = Column(String)
-
+    
     file_url = Column(String)
+    file_data  = Column(LargeBinary, nullable=True) 
+    file_name  = Column(String, nullable=True)  

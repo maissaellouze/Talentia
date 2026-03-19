@@ -1,10 +1,9 @@
 import React from 'react';
 
-const LABELS = ['CV', 'Compte', 'Profil', 'Skills', 'Préfs', 'Fin'];
+const LABELS = ['CV', 'Compte', 'Profil', 'Expériences', 'Skills', 'Préfs', 'OTP', 'Fin'];
 
-export default function ProgressBar({ step, total = 6 }) {
+export default function ProgressBar({ step, total = 8 }) {
   const pct = step === 0 ? 2 : Math.round((step / (total - 1)) * 100);
-
   return (
     <div style={{ marginBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
