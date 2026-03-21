@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.models.user import User
 from app.models.student import Student
-from app.models.company import Company
+from app.models.company import Societe
 from app.models.cv import CV
 from app.models.experience import Experience
 from app.models.skill import Skill
@@ -14,6 +14,8 @@ from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
 from app.models.preference import Preference
+from app.routers.societe import router as societe_router
+
 # Importation des routers
 from app.routers import auth
 
@@ -39,6 +41,8 @@ Base.metadata.create_all(bind=engine)
 # Inclusion des routes
 app.include_router(auth.router)
 
+# Include your routes
+app.include_router(societe_router)
 
 @app.get("/")
 def root():
