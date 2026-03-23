@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage    from './pages/HomePage';
+import CompaniesDashboard from './pages/CompaniesDashboard';
 import Modal       from './components/modal/Modal';
 
 export default function App() {
@@ -23,6 +24,9 @@ export default function App() {
 
         {/* Route 2 : La page Home complètement séparée */}
         <Route path="/home" element={<HomePage />} />
+
+        {/* Route 3 : La page Dashboard Entreprises */}
+        <Route path="/companies" element={<CompaniesDashboard />} />
       </Routes>
 
       {/* Le Modal reste global pour s'afficher par-dessus la Landing */}

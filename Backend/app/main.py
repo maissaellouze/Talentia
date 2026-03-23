@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.models.user import User
 from app.models.student import Student
-from app.models.company import Company
+from app.models.company import Societe
 from app.models.cv import CV
 from app.models.experience import Experience
 from app.models.skill import Skill

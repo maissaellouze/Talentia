@@ -17,7 +17,7 @@ from app.utils.security import hash_password, verify_password
 
 from app.models.user import User
 from app.models.student import Student
-from app.models.company import Company
+from app.models.company import Societe as Company
 from app.models.cv import CV
 from app.models.skill import Skill
 from app.models.soft_skill import SoftSkill
@@ -29,7 +29,7 @@ from app.models.club import Club
 from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
-from app.schemas.company_schema import CompanyCreate
+from app.schemas.company_schema import SocieteCreate as CompanyCreate
 
 # ── Configuration IA ──
 HF_TOKEN = "your token "
