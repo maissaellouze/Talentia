@@ -14,16 +14,18 @@ from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
 from app.models.preference import Preference
-# Importation des routers
+# Import routers
 from app.routers import auth
+from app.routers import reports
 
-# Initialisation de l'application
+# ✅ 1. créer app d'abord
 app = fastapi.FastAPI(
     title="Talentia - Internship Platform API",
     description="API avec extraction de CV par IA et gestion des stages",
     version="1.0.0"
 )
 
+# ✅ 2. middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -32,14 +34,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Création automatique des tables dans PostgreSQL
-#Base.metadata.drop_all(bind=engine)
+# ✅ 3. base de données
 Base.metadata.create_all(bind=engine)
 
-# Inclusion des routes
+# ✅ 4. include routers (ICI seulement)
 app.include_router(auth.router)
+app.include_router(reports.router)
 
-
+# route test
 @app.get("/")
 def root():
     return {
@@ -48,8 +50,7 @@ def root():
         "redoc": "/redoc"
     }
 
-
-# Lancement local
+# run
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
