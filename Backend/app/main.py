@@ -14,7 +14,9 @@ from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
 from app.models.preference import Preference
-# Import routers
+
+# ✅ Import routers
+from app.routers.societe import router as societe_router
 from app.routers import auth
 from app.routers import reports
 
@@ -37,9 +39,10 @@ app.add_middleware(
 # ✅ 3. base de données
 Base.metadata.create_all(bind=engine)
 
-# ✅ 4. include routers (ICI seulement)
+# ✅ 4. include routers
 app.include_router(auth.router)
 app.include_router(reports.router)
+app.include_router(societe_router)
 
 # route test
 @app.get("/")
