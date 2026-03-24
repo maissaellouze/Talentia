@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text
 from app.database import Base
-from sqlalchemy.orm import relationship  # <--- ADD THIS IMPORT
+from sqlalchemy.orm import relationship
+
 class Student(Base):
     __tablename__ = "students"
 
@@ -24,4 +25,4 @@ class Student(Base):
     phone = Column(String)
 
     # Linking back to the user
-user = relationship("User", back_populates="student")
+    user = relationship("User", back_populates="student")

@@ -215,36 +215,46 @@ export default function Modal({ mode, onClose }) {
 }
 
   // --- LOGIN ---
- // --- LOGIN ---
-async function handleLogin() {
-  setLoginErr(null);
-  try {
-    const fd = new FormData();
-    fd.append('username', loginCreds.email);
-    fd.append('password', loginCreds.password);
+  const [loginLoading, setLoginLoading] = useState(false);
 
-    const res = await fetch(`${API}/login`, { method: 'POST', body: fd });
-    
-    if (!res.ok) {
-        const errorData = await res.json();
+  async function handleLogin(e) {
+    if (e) e.preventDefault();
+    setLoginErr(null);
+    setLoginLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('username', loginCreds.email.trim());
+      fd.append('password', loginCreds.password);
+
+      const res = await fetch(`${API}/login`, { method: 'POST', body: fd });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Identifiants incorrects');
+      }
+
+      const { access_token, role, company_id, name } = await res.json();
+
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('role', role);
+      if (name) localStorage.setItem('userName', name);
+      if (company_id) localStorage.setItem('companyId', company_id);
+
+      onClose();
+
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'company') {
+        navigate('/company-dashboard');
+      } else {
+        navigate('/opportunities');
+      }
+    } catch (e) {
+      setLoginErr(e.message);
+    } finally {
+      setLoginLoading(false);
     }
-
-    const { access_token } = await res.json();
-    
-    // 1. Save the token
-    localStorage.setItem('token', access_token);
-    
-    // 2. Close the modal
-    onClose();
-    
-    // 3. Redirect to the home page
-    navigate('/home'); 
-
-  } catch (e) { 
-    setLoginErr(e.message); 
   }
-}
 
   const totalMois = Math.round(experiences.reduce((acc, exp) => {
     if (!exp.start_date) return acc;
@@ -276,15 +286,15 @@ async function handleLogin() {
 
           {/* ─── LOGIN (Step -1) ─── */}
           {step === -1 && (
-            <div>
+            <form onSubmit={handleLogin}>
               <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Bon retour 👋</h2>
               <p style={{ fontSize: 13, color: '#6b7280', marginBottom: '1.8rem' }}>Accédez à votre tableau de bord</p>
-              <Field label="Email"><Input value={loginCreds.email} onChange={e => setLoginCreds(p => ({ ...p, email: e.target.value }))} /></Field>
-              <Field label="Mot de passe"><Input type="password" value={loginCreds.password} onChange={e => setLoginCreds(p => ({ ...p, password: e.target.value }))} /></Field>
+              <Field label="Email"><Input type="email" value={loginCreds.email} onChange={e => setLoginCreds(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" /></Field>
+              <Field label="Mot de passe"><Input type="password" value={loginCreds.password} onChange={e => setLoginCreds(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" /></Field>
               {loginErr && <div style={{ color: 'red', fontSize: 12, marginBottom: 8 }}>{loginErr}</div>}
-              <Button onClick={handleLogin}>Se connecter →</Button>
+              <Button type="submit" disabled={loginLoading}>{loginLoading ? 'Connexion...' : 'Se connecter →'}</Button>
               <Button variant="ghost" onClick={() => setStep(0)}>Créer un compte</Button>
-            </div>
+            </form>
           )}
 
           {/* ─── STEPS D'INSCRIPTION ─── */}

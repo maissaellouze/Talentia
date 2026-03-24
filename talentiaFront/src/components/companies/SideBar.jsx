@@ -13,28 +13,46 @@ import {
   Business as BusinessIcon,
   WorkOutline as WorkIcon,
   AdminPanelSettings as AdminIcon,
+  ExitToApp as LogoutIcon,
+  Dashboard as DashboardIcon,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const Sidebar = () => {
+const Sidebar = ({ role = 'student', activeTab, setActiveTab }) => {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const menuItems = [
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/';
+  };
+
+  const studentItems = [
+    { label: "Dashboard", path: "/home", icon: <DashboardIcon /> },
     { label: "Entreprises", path: "/companies", icon: <BusinessIcon /> },
     { label: "Opportunités", path: "/opportunities", icon: <WorkIcon /> },
-    { label: "Admin Sociétés", path: "/admin/societes", icon: <AdminIcon /> },
   ];
+
+  const companyItems = [
+    { label: "Vos Offres", id: "opportunities", icon: <WorkIcon /> },
+    { label: "Profil Entreprise", id: "profile", icon: <BusinessIcon /> },
+  ];
+
+  const items = role === 'student' ? studentItems : companyItems;
 
   return (
     <Box
       sx={{
-        height: "100%",
+        height: "100vh",
         bgcolor: "#fff",
         borderRight: "1px solid #e5e5ec",
         display: "flex",
         flexDirection: "column",
+        position: 'sticky',
+        top: 0,
+        width: 260,
+        zIndex: 100
       }}
     >
       <Box
@@ -45,7 +63,7 @@ const Sidebar = () => {
             width: 36,
             height: 36,
             borderRadius: "10px",
-            background: theme.palette.primary.main,
+            background: theme.palette.primary.main || '#0d9488',
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -64,30 +82,36 @@ const Sidebar = () => {
             color: "#0a0a12",
           }}
         >
-          Talent<span style={{ color: theme.palette.primary.main }}>AI</span>
+          Talent<span style={{ color: theme.palette.primary.main || '#0d9488' }}>IA</span>
         </Typography>
       </Box>
 
       <List sx={{ px: 2, flexGrow: 1 }}>
-        {menuItems.map((item) => {
-          const active =
-            location.pathname === item.path ||
-            (item.path !== "/" && location.pathname.startsWith(item.path));
+        {items.map((item) => {
+          const isActive = role === 'student' 
+            ? location.pathname === item.path 
+            : activeTab === item.id;
+
+          const handleClick = () => {
+            if (role === 'student') navigate(item.path);
+            else setActiveTab(item.id);
+          };
+
           return (
             <ListItem disablePadding key={item.label} sx={{ mb: 1 }}>
               <ListItemButton
-                onClick={() => navigate(item.path)}
+                onClick={handleClick}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: active
-                    ? alpha(theme.palette.primary.main, 0.1)
+                  bgcolor: isActive
+                    ? alpha(theme.palette.primary.main || '#0d9488', 0.1)
                     : "transparent",
-                  color: active ? theme.palette.primary.main : "#6b7280",
+                  color: isActive ? (theme.palette.primary.main || '#0d9488') : "#6b7280",
                   "&:hover": {
-                    bgcolor: active
-                      ? alpha(theme.palette.primary.main, 0.15)
-                      : alpha(theme.palette.primary.main, 0.05),
-                    color: active ? theme.palette.primary.main : "#0a0a12",
+                    bgcolor: isActive
+                      ? alpha(theme.palette.primary.main || '#0d9488', 0.15)
+                      : alpha(theme.palette.primary.main || '#0d9488', 0.05),
+                    color: isActive ? (theme.palette.primary.main || '#0d9488') : "#0a0a12",
                   },
                 }}
               >
@@ -97,7 +121,7 @@ const Sidebar = () => {
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
-                    fontWeight: active ? 600 : 500,
+                    fontWeight: isActive ? 600 : 500,
                     fontSize: "14px",
                   }}
                 />
@@ -106,6 +130,31 @@ const Sidebar = () => {
           );
         })}
       </List>
+
+      <Box sx={{ p: 2, borderTop: '1px solid #e5e5ec' }}>
+        <ListItemButton
+          onClick={handleLogout}
+          sx={{
+            borderRadius: 2,
+            color: "#6b7280",
+            "&:hover": {
+              bgcolor: alpha(theme.palette.error?.main || '#ef4444', 0.05),
+              color: theme.palette.error?.main || '#ef4444',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText
+            primary="Déconnexion"
+            primaryTypographyProps={{
+              fontWeight: 500,
+              fontSize: "14px",
+            }}
+          />
+        </ListItemButton>
+      </Box>
     </Box>
   );
 };

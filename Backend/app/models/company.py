@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, Text, Boolean, JSON
+from sqlalchemy import Column, Integer, String, Float, Text, Boolean, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 class Societe(Base):#hiya samatha company
@@ -46,6 +47,16 @@ class Societe(Base):#hiya samatha company
     phone = Column(String, nullable=True)
 
     # --- Extra ---
-    verified_status = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=False)
+    status = Column(String, default="pending")  # pending / verified / rejected
+    role = Column(String, default="company")    # Always "company"
     average_rating = Column(Float, nullable=True)
     review_count = Column(Integer, default=0)
+
+    # --- Auth & Status ---
+    password = Column(String, nullable=True)
+   
+    # Relationships
+    reviews = relationship("Review", back_populates="company", cascade="all, delete-orphan")
+    opportunities = relationship("Opportunity", back_populates="company", cascade="all, delete-orphan")
+    pfe_reports = relationship("PFEReport", back_populates="company", cascade="all, delete-orphan")

@@ -83,7 +83,7 @@ export function Testimonials() {
 }
 
 /* ─── CTA ─── */
-export function CTA({ onSignup }) {
+export function CTA({ onSignup, onCompany }) {
   return (
     <section style={{ background: '#0a0a12', padding: '6rem 2rem', textAlign: 'center' }}>
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
@@ -93,9 +93,14 @@ export function CTA({ onSignup }) {
         <div style={{ fontSize: 16, color: 'rgba(255,255,255,.45)', marginBottom: '2.5rem' }}>
           Rejoignez 12 000+ étudiants qui utilisent TalentIA.
         </div>
-        <button onClick={onSignup} style={{ height: 56, padding: '0 40px', borderRadius: 12, background: '#0d9488', border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(13,148,136,.3)' }}>
-          Créer mon profil gratuitement →
-        </button>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button onClick={onSignup} style={{ height: 56, padding: '0 40px', borderRadius: 12, background: '#0d9488', border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(13,148,136,.3)' }}>
+            Créer mon profil gratuitement →
+          </button>
+          <button onClick={onCompany} style={{ height: 56, padding: '0 32px', borderRadius: 12, background: 'transparent', border: '1.5px solid #14b8a6', color: '#14b8a6', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Espace Recruteur
+          </button>
+        </div>
       </div>
     </section>
   );

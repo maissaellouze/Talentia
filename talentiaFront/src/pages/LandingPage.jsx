@@ -4,16 +4,16 @@ import Hero from '../components/sections/Hero';
 import { HowItWorks, Features, Testimonials, CTA } from '../components/sections/Sections';
 import Footer from '../components/layout/Footer';
 
-export default function LandingPage({ onLogin, onSignup }) {
+export default function LandingPage({ onLogin, onSignup, onCompany }) {
   return (
     <>
-      <Navbar onLogin={onLogin} onSignup={onSignup} />
+      <Navbar onLogin={onLogin} onSignup={onSignup} onCompany={onCompany} />
       <main>
-        <Hero onSignup={onSignup} />
+        <Hero onSignup={onSignup} onCompany={onCompany} />
         <HowItWorks />
         <Features />
         <Testimonials />
-        <CTA onSignup={onSignup} />
+        <CTA onSignup={onSignup} onCompany={onCompany} />
       </main>
       <Footer />
     </>

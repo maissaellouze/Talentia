@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from fastapi import UploadFile, File, Form
+from sqlalchemy import Column, Integer, String, Float, Text, Boolean, JSON, func
+from sqlalchemy.orm import Session, relationship
 from typing import Optional, List
-from app.database import SessionLocal
+from app.database import SessionLocal, Base
 from app.models.company import Societe
+from app.models.review import Review
 from app.schemas.company_schema import SocieteResponse, PaginatedResponse, SocieteCreate, SocieteUpdate
-
+from app.schemas.review_schema import ReviewCreate, ReviewResponse
+from app.models.pfe_report import PFEReport
+import shutil, os
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 router = APIRouter()
 
 # Dependency
@@ -136,3 +143,70 @@ def delete_societe(company_id: int, db: Session = Depends(get_db)):
     db.delete(db_societe)
     db.commit()
     return None
+
+# --- Review Endpoints ---
+
+@router.get("/societes/{company_id}/reviews", response_model=List[ReviewResponse])
+def get_company_reviews(company_id: int, db: Session = Depends(get_db)):
+    """Get all reviews for a specific company"""
+    reviews = db.query(Review).filter(Review.company_id == company_id).all()
+    return reviews
+
+@router.post("/societes/{id}/reviews")
+def add_review(id: int, review_data: dict, db: Session = Depends(get_db)):
+    from app.models.review import Review
+
+    company = db.query(Societe).filter(Societe.id == id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée")
+
+    review = Review(**review_data, company_id=id)
+    db.add(review)
+
+    # ✅ increment review count and recalculate average
+    company.review_count = (company.review_count or 0) + 1
+    if company.average_rating:
+        company.average_rating = (
+            (company.average_rating * (company.review_count - 1)) + review_data["rating"]
+        ) / company.review_count
+    else:
+        company.average_rating = review_data["rating"]
+
+    db.commit()
+    db.refresh(review)
+    return review
+
+
+
+
+
+@router.get("/societes/{id}/pfe")
+def get_pfe(id: int, db: Session = Depends(get_db)):
+    return db.query(PFEReport).filter(PFEReport.company_id == id).all()
+
+@router.post("/societes/{id}/pfe")
+async def upload_pfe(
+    id: int,
+    title: str = Form(...),
+    domain: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    company = db.query(Societe).filter(Societe.id == id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée")
+
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    report = PFEReport(
+        title=title,
+        domain=domain,
+        file_url=f"/uploads/{file.filename}",
+        company_id=id,
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return report

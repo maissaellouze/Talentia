@@ -6,6 +6,7 @@ export default function Button({
   disabled,
   children,
   style,
+  type = 'button',
   fullWidth = true,
 }) {
   const [hov, setHov] = useState(false);
@@ -47,6 +48,7 @@ export default function Button({
 
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
       onMouseEnter={() => setHov(true)}

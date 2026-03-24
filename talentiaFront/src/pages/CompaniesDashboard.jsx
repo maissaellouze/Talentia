@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CompanyCard from "../components/companies/CompanyCard";
 import CompaniesFilter from "../components/companies/CompaniesFilter";
+import CompanyModal from "../components/companies/CompanyModal";
 import MainLayout from "../components/layout/CompanyLayout";
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -17,6 +18,8 @@ const CompaniesDashboard = () => {
   const [sectors, setSectors] = useState([]);
   const [cities, setCities] = useState([]);
   const [filtersLoading, setFiltersLoading] = useState(true);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const pageSize = 12;
 
@@ -96,6 +99,15 @@ const CompaniesDashboard = () => {
   const handlePageChange = (newPage) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCompanyClick = (company) => {
+    setSelectedCompany(company);
+    setIsModalOpen(true);
+  };
+
+  const handleReviewAdded = () => {
+    fetchCompanies(); // Refresh company list to update ratings
   };
 
   const activeFiltersStr = [searchTerm, selectedSector, selectedCity].filter(Boolean).length;
@@ -267,10 +279,23 @@ const CompaniesDashboard = () => {
             </div>
           ) : (
             companies.map(company => (
-              <CompanyCard key={company.id} company={company} />
+              <CompanyCard 
+                key={company.id} 
+                company={company} 
+                onClick={handleCompanyClick}
+              />
             ))
           )}
         </div>
+
+        {/* Company Modal */}
+        {isModalOpen && selectedCompany && (
+          <CompanyModal 
+            company={selectedCompany} 
+            onClose={() => setIsModalOpen(false)}
+            onReviewAdded={handleReviewAdded}
+          />
+        )}
 
         {/* Pagination Controls */}
         {!loading && !error && totalPages > 1 && (

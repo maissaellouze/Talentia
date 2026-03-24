@@ -5,11 +5,13 @@ import json
 import random
 import time
 import smtplib
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import fitz  # PyMuPDF
-from fastapi import APIRouter, Depends, Response, UploadFile, File, Form, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Response, UploadFile, File, Form, HTTPException, status
+from sqlalchemy.orm import Session, joinedload
+from jose import JWTError, jwt
 from huggingface_hub import InferenceClient
 
 from app.database import get_db
@@ -41,16 +43,14 @@ router = APIRouter(prefix="/auth", tags=["Registration"])
 # ── Config email ──
 SMTP_HOST     = "smtp.gmail.com"
 SMTP_PORT     = 587
-SMTP_EMAIL    = "maissaellouze02@gmail.com"    # ← remplace par ton email Gmail
-SMTP_PASSWORD = "hood qlfc ummf vcka"       # ← remplace par ton App Password Gmail
+SMTP_EMAIL    = "maissaellouze02@gmail.com"
+SMTP_PASSWORD = "hood qlfc ummf vcka"
 
 # Stockage OTP en mémoire { email: { code, expires_at } }
 otp_store: dict = {}
 
-
 def generate_otp() -> str:
     return str(random.randint(100000, 999999))
-
 
 def send_otp_email(to_email: str, otp: str) -> None:
     msg = MIMEMultipart("alternative")
@@ -80,8 +80,6 @@ def send_otp_email(to_email: str, otp: str) -> None:
         server.login(SMTP_EMAIL, SMTP_PASSWORD)
         server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
 
-
-
 # ════════════════════════════════════════════════
 # UTILITAIRES — Nettoyage des données extraites
 # ════════════════════════════════════════════════
@@ -93,613 +91,234 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
             text += page.get_text()
     return text
 
-
 def _deduce_from_description(description: str) -> str:
-    """Déduit le poste depuis la description du projet."""
-    if not description:
-        return "Développeur Stagiaire"
+    if not description: return "Développeur Stagiaire"
     d = description.lower()
-    if "mobile" in d or "flutter" in d or "android" in d or "ios" in d:
-        return "Développeur Mobile"
-    if "web" in d or "angular" in d or "react" in d or "php" in d or "django" in d:
-        return "Développeur Web"
-    if "desktop" in d or "javafx" in d:
-        return "Développeur Logiciel"
-    if "erp" in d or "dashboard" in d or "reporting" in d or "jasper" in d:
-        return "Développeur Full Stack"
-    if "api" in d or "backend" in d or "spring" in d or "node" in d:
-        return "Développeur Backend"
-    if "machine learning" in d or "data" in d or "python" in d:
-        return "Développeur Data"
-    if "java" in d:
-        return "Développeur Logiciel"
+    if any(k in d for k in ["mobile", "flutter", "android", "ios"]): return "Développeur Mobile"
+    if any(k in d for k in ["web", "angular", "react", "php", "django"]): return "Développeur Web"
+    if any(k in d for k in ["desktop", "javafx"]): return "Développeur Logiciel"
+    if any(k in d for k in ["erp", "dashboard", "reporting", "jasper"]): return "Développeur Full Stack"
+    if any(k in d for k in ["api", "backend", "spring", "node"]): return "Développeur Backend"
+    if any(k in d for k in ["machine learning", "data", "python"]): return "Développeur Data"
+    if "java" in d: return "Développeur Logiciel"
     return "Développeur Stagiaire"
 
-
 def clean_position(position: str, description: str) -> str:
-    """Déduit un poste propre depuis un titre mal extrait."""
-    if not position:
-        return "Stagiaire"
+    if not position: return "Stagiaire"
     p = position.lower().strip()
-    if "problem solving" in p:
-        return _deduce_from_description(description)
-    if p.startswith("technology:") or p.startswith("technologies:"):
-        return _deduce_from_description(description)
-    if p in ["internship", "intern", "stagiaire", "stage"]:
-        return "Stagiaire"
+    if "problem solving" in p or p.startswith("technology"): return _deduce_from_description(description)
+    if p in ["internship", "intern", "stagiaire", "stage"]: return "Stagiaire"
     return position.strip()
 
-
 def clean_company(company: str) -> str:
-    """Nettoie le nom de la société."""
-    if not company or company.strip() == "":
-        return "Freelance"
-    c = company.strip()
-    bad_values = ["null", "none", "n/a", "-", "—", "non spécifié", "unknown"]
-    if c.lower() in bad_values:
-        return "Freelance"
-    return c
-
+    if not company or company.strip().lower() in ["", "null", "none", "n/a", "-", "—", "unknown"]: return "Freelance"
+    return company.strip()
 
 def clean_date(date_str) -> str | None:
-    """Normalise une date en YYYY-MM-DD."""
-    if not date_str:
-        return None
+    if not date_str: return None
     d = str(date_str).strip().lower()
-    if d in ["present", "présent", "now", "current", "en cours", "aujourd'hui", "null", "none"]:
-        return None
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", d):
-        return date_str
-    if re.match(r"^\d{4}-\d{2}$", d):
-        return d + "-01"
-    if re.match(r"^\d{4}$", d):
-        return d + "-01-01"
+    if d in ["present", "présent", "now", "current", "en cours", "aujourd'hui"]: return None
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", d): return date_str
+    if re.match(r"^\d{4}-\d{2}$", d): return d + "-01"
+    if re.match(r"^\d{4}$", d): return d + "-01-01"
     m = re.match(r"^(\d{2})/(\d{4})$", d)
-    if m:
-        return f"{m.group(2)}-{m.group(1)}-01"
-    months = {
-        "january": "01", "february": "02", "march": "03", "april": "04",
-        "may": "05", "june": "06", "july": "07", "august": "08",
-        "september": "09", "october": "10", "november": "11", "december": "12",
-        "jan": "01", "feb": "02", "mar": "03", "apr": "04",
-        "jun": "06", "jul": "07", "aug": "08", "sep": "09",
-        "oct": "10", "nov": "11", "dec": "12",
-        "janvier": "01", "février": "02", "mars": "03", "avril": "04",
-        "mai": "05", "juin": "06", "juillet": "07", "août": "08",
-        "septembre": "09", "octobre": "10", "novembre": "11", "décembre": "12",
-    }
-    for month_name, month_num in months.items():
-        pattern = rf"{month_name}\s+(\d{{4}})"
-        m = re.search(pattern, d)
-        if m:
-            return f"{m.group(1)}-{month_num}-01"
+    if m: return f"{m.group(2)}-{m.group(1)}-01"
     return None
 
-
 def clean_experiences(experiences: list) -> list:
-    """Nettoie et valide toutes les expériences."""
-    cleaned = []
-    for exp in experiences:
-        if not isinstance(exp, dict):
-            continue
-        cleaned.append({
-            "company":     clean_company(exp.get("company", "")),
-            "position":    clean_position(exp.get("position", ""), exp.get("description", "")),
-            "description": exp.get("description", ""),
-            "start_date":  clean_date(exp.get("start_date")),
-            "end_date":    clean_date(exp.get("end_date")),
-        })
-    return cleaned
-
+    return [{
+        "company": clean_company(e.get("company", "")),
+        "position": clean_position(e.get("position", ""), e.get("description", "")),
+        "description": e.get("description", ""),
+        "start_date": clean_date(e.get("start_date")),
+        "end_date": clean_date(e.get("end_date")),
+    } for e in experiences if isinstance(e, dict)]
 
 def ask_ai_to_format(raw_text: str) -> dict:
-    system_instruction = (
-        "Tu es un expert RH spécialisé dans l'extraction de CV. "
-        "Tu dois extraire TOUTES les expériences professionnelles EXACTEMENT comme elles apparaissent. "
-        "Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans explication. "
-        "Date actuelle : Mars 2026."
-    )
-
-    prompt = f"""Extrais les données du CV ci-dessous en JSON STRICT.
-
-═══ RÈGLES EXPÉRIENCES (TRÈS IMPORTANT) ═══
-- Extrais TOUTES les expériences : stages, CDI, CDD, alternance, freelance, internship.
-- Types reconnus : stage, emploi salarié, mission freelance, travail indépendant.
-- "company" : nom EXACT de l'entreprise dans le CV. Si absent ou travail indépendant → "Freelance".
-- "position" : intitulé EXACT du poste. Si "Internship" seul → "Stagiaire".
-- "start_date" / "end_date" : format "YYYY-MM-DD". Si en cours → null.
-- EXCLURE uniquement : clubs, sport, compétitions, hackathons, projets scolaires non rémunérés.
-- Le tableau experiences doit contenir TOUTES les expériences, ne pas en omettre une seule.
-
-═══ RÈGLES DATES ═══
-- Convertis TOUJOURS en "YYYY-MM-DD" :
-    "Jan 2023" → "2023-01-01", "March 2022" → "2022-03-01", "2021" → "2021-01-01"
-- Si end_date = "Present" / "Now" / "En cours" / "Présent" → null
-- Si end_date est une vraie date passée → la convertir, NE PAS mettre null
-
-═══ RÈGLES DEGREE LEVEL ═══
-- "Software Engineering" / "Engineering degree" / "Ingénieur" → "Ingénierie"
-- "Master of Science" / "MSc" / "Master" → "Master"
-- "Bachelor" / "BSc" / "Bachelor of IT" / "Licence" → "Licence"
-- "PhD" / "Doctorat" → "Doctorat"
-- NE PAS mettre "Master 2" si le CV dit "Engineering"
-
-═══ RÈGLES SKILLS ═══
-- "skills" = hard skills : langages, frameworks, outils + Problem Solving (category: "Analytique")
-- "soft_skills" = comportementales uniquement : leadership, communication, travail en équipe
-- Problem Solving → TOUJOURS dans "skills", JAMAIS dans experiences comme position
-
-FORMAT JSON EXACT :
-{{
-    "email": "...", "firstName": "...", "lastName": "...",
-    "phone": "...", "city": "...", "address": "...",
-    "university": "...", "field_of_study": "...", "degree_level": "...",
-    "skills": [{{"name": "...", "category": "Tech", "level": "Intermédiaire"}}],
-    "education": [{{"institution": "...", "degree": "...", "field_of_study": "...",
-                   "start_year": 2020, "end_year": 2024, "grade": "...", "description": ""}}],
-    "experiences": [{{"company": "...", "position": "...", "description": "...",
-                     "start_date": "2023-01-01", "end_date": "2024-06-01"}}],
-    "languages": [{{"name": "...", "level": "..."}}],
-    "soft_skills": [{{"name": "...", "level": "..."}}]
-}}
-
-═══ CV À ANALYSER ═══
-{raw_text}"""
-
-    response = client.chat_completion(
-        messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=2500,
-        temperature=0.1,
-    )
-
-    content = response.choices[0].message.content.strip()
-    content = content.replace("```json", "").replace("```", "").strip()
-
-    try:
-        data = json.loads(content)
-    except json.JSONDecodeError as e:
-        raise HTTPException(
-            status_code=422,
-            detail=f"L'IA a retourné un JSON invalide. Réessaie. ({e})",
-        )
-
-    # ── Post-traitement Python ──
+    system_instruction = "Tu es un expert RH spécialisé dans l'extraction de CV. Réponds UNIQUEMENT avec du JSON valide."
+    prompt = f"Extrais les données du CV en JSON. Format: email, firstName, lastName, phone, city, university, field_of_study, degree_level, skills, education, experiences, languages, soft_skills. \n\n CV: {raw_text}"
+    response = client.chat_completion(messages=[{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}], max_tokens=2500, temperature=0.1)
+    content = response.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
+    try: data = json.loads(content)
+    except: raise HTTPException(status_code=422, detail="IA JSON Error")
     data["experiences"] = clean_experiences(data.get("experiences", []))
-
-    field  = (data.get("field_of_study") or "").lower()
-    degree = (data.get("degree_level")   or "").lower()
-    if "engineering" in field or "ingénierie" in field:
-        data["degree_level"] = "Ingénierie"
-    elif "bachelor" in degree or "licence" in degree:
-        data["degree_level"] = "Licence"
-
     return data
 
+# ════════════════════════════════════════════════
+# ROUTES
+# ════════════════════════════════════════════════
 
-# ════════════════════════════════════════════════
-# 1. Register Student (Manuel — Form + JSON)
-# ════════════════════════════════════════════════
 @router.post("/register/student/manual", status_code=201)
 async def register_student_manual(
-    password:    str = Form(...),
-    email:       str = Form(...),
-    first_name:  str = Form(default=""),
-    last_name:   str = Form(default=""),
-    phone:       str = Form(default=""),
-    city:        str = Form(default=""),
-    address:     str = Form(default=""),
-    university:  str = Form(default=""),
-    field_of_study: str = Form(default=""),
-    degree_level:   str = Form(default=""),
-    skills:      str = Form(default="[]"),       # JSON list
-    experiences: str = Form(default="[]"),       # JSON list
-    languages:   str = Form(default="[]"),       # JSON list
-    soft_skills: str = Form(default="[]"),       # JSON list
-    prefs:       str = Form(default="{}"),       # JSON
-    db: Session = Depends(get_db),
+    password:str=Form(...), email:str=Form(...), first_name:str=Form(""), last_name:str=Form(""),
+    phone:str=Form(""), university:str=Form(""), field_of_study:str=Form(""), degree_level:str=Form(""),
+    skills:str=Form("[]"), experiences:str=Form("[]"), languages:str=Form("[]"), soft_skills:str=Form("[]"),
+    prefs:str=Form("{}"), db:Session=Depends(get_db)
 ):
-    # 1. Parser les JSON envoyés par le formulaire
     try:
-        skills_data      = json.loads(skills)
+        skills_data = json.loads(skills)
         experiences_data = json.loads(experiences)
-        languages_data   = json.loads(languages)
+        languages_data = json.loads(languages)
         soft_skills_data = json.loads(soft_skills)
-        prefs_data       = json.loads(prefs)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=422, detail="Données JSON mal formées.")
+        prefs_data = json.loads(prefs)
+    except: raise HTTPException(status_code=422, detail="JSON Error")
 
-    # 2. Vérification Email
-    if not email:
-        raise HTTPException(status_code=422, detail="Email requis.")
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(status_code=400, detail=f"L'email '{email}' est déjà enregistré.")
-
-    # 3. Vérifier l'OTP (Correction UnboundLocalError)
+    if db.query(User).filter(User.email == email).first(): raise HTTPException(status_code=400, detail="Email exists")
+    
     otp_code = prefs_data.get("otp_code", "")
     entry = otp_store.get(email)
-    
-    if not entry:
-        raise HTTPException(status_code=400, detail="Aucun code OTP généré pour cet email.")
-    if time.time() > entry["expires_at"]:
-        otp_store.pop(email, None)
-        raise HTTPException(status_code=400, detail="Code OTP expiré.")
-    if str(entry["code"]) != str(otp_code).strip():
-        raise HTTPException(status_code=400, detail="Code OTP incorrect.")
-    
-    # Consommer l'OTP
+    if not entry or str(entry["code"]) != str(otp_code).strip(): raise HTTPException(status_code=400, detail="OTP Error")
     otp_store.pop(email, None)
 
     try:
-        # 4. Création User
         user = User(email=email, password=hash_password(password), role="student")
-        db.add(user)
-        db.flush()
-
-        # 5. Création Student
-        student = Student(
-            user_id=user.id,
-            first_name=first_name,
-            last_name=last_name,
-            university=university,
-            field_of_study=field_of_study,
-            degree_level=degree_level,
-            phone=phone,
-        )
-        db.add(student)
-        db.flush()
-
-        # 6. Création CV vide (pour attacher skills/exp)
-        cv = CV(student_id=student.id, title="Profil TalentIA")
-        db.add(cv)
-        db.flush()
-
-        # 7. Ajout des listes
-        for s in skills_data:
-            db.add(Skill(cv_id=cv.id, name=s.get("name"), category=s.get("category", "Tech"), level=s.get("level", "Intermédiaire")))
-
-        for exp in experiences_data:
-            db.add(Experience(
-                cv_id=cv.id,
-                company_name=clean_company(exp.get("company")),
-                role=exp.get("position"),
-                description=exp.get("description"),
-                start_date=clean_date(exp.get("start_date")),
-                end_date=clean_date(exp.get("end_date")),
-            ))
-
-        for lang in languages_data:
-            db.add(Language(cv_id=cv.id, name=lang.get("name"), level=lang.get("level")))
-
-        for ss in soft_skills_data:
-            db.add(SoftSkill(cv_id=cv.id, name=ss.get("name"), level=ss.get("level")))
-
-        # 8. Préférences
-        preference = Preference(
-            student_id   = student.id,
-            availability = prefs_data.get("availability", "Immédiate"),
-            sectors      = ",".join(prefs_data.get("sectors", [])),
-            notif_offres = prefs_data.get("notifs", {}).get("offres", True),
-            notif_hebdo  = prefs_data.get("notifs", {}).get("hebdo",  True),
-            notif_recrut = prefs_data.get("notifs", {}).get("recrut", True),
-        )
-        db.add(preference)
-
+        db.add(user); db.flush()
+        student = Student(user_id=user.id, first_name=first_name, last_name=last_name, phone=phone, university=university, field_of_study=field_of_study, degree_level=degree_level)
+        db.add(student); db.flush()
+        cv = CV(student_id=student.id, title="Profil")
+        db.add(cv); db.flush()
+        for s in skills_data: db.add(Skill(cv_id=cv.id, name=s.get("name"), category=s.get("category", "Tech"), level=s.get("level", "Intermédiaire")))
+        for exp in experiences_data: db.add(Experience(cv_id=cv.id, company_name=clean_company(exp.get("company")), role=exp.get("position"), description=exp.get("description"), start_date=clean_date(exp.get("start_date")), end_date=clean_date(exp.get("end_date"))))
+        for lang in languages_data: db.add(Language(cv_id=cv.id, name=lang.get("name"), level=lang.get("level")))
+        for ss in soft_skills_data: db.add(SoftSkill(cv_id=cv.id, name=ss.get("name"), level=ss.get("level")))
+        db.add(Preference(student_id=student.id, availability=prefs_data.get("availability", "Immédiate"), sectors=",".join(prefs_data.get("sectors", []))))
         db.commit()
-        return {"message": "Inscription réussie", "student_id": student.id}
-
+        return {"message": "Success", "student_id": student.id}
     except Exception as e:
-        db.rollback()
-        print(f"ERROR: {str(e)}") # Log pour debug console
-        raise HTTPException(status_code=500, detail=f"Erreur serveur : {str(e)}")
+        db.rollback(); raise HTTPException(status_code=500, detail=str(e))
 
-
-# ════════════════════════════════════════════════
-# 3. Register Student Auto (via IA + corrections)
-# ════════════════════════════════════════════════
 @router.post("/register/student/auto", status_code=201)
-async def register_student_auto(
-    password:  str        = Form(...),
-    file:      UploadFile = File(...),
-    overrides: str        = Form(default="{}"),  
-    prefs:     str        = Form(default="{}"),  
-    db:        Session    = Depends(get_db),
-):
-    # 1. Parsing JSON inputs from Frontend
+async def register_student_auto(password:str=Form(...), file:UploadFile=File(...), overrides:str=Form("{}"), prefs:str=Form("{}"), db:Session=Depends(get_db)):
     try:
-        user_overrides = json.loads(overrides)
-        prefs_data     = json.loads(prefs)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=422, detail="Format JSON incorrect dans overrides ou prefs.")
+        overrides_data = json.loads(overrides)
+        prefs_data = json.loads(prefs)
+    except: raise HTTPException(status_code=422, detail="JSON Error")
 
-    # 2. PDF Extraction & IA Analysis
     pdf_bytes = await file.read()
-    raw_text  = extract_text_from_pdf(pdf_bytes)
-    if not raw_text.strip():
-        raise HTTPException(status_code=422, detail="Le contenu du PDF est vide ou illisible.")
-
-    try:
-        data = ask_ai_to_format(raw_text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Échec de l'analyse IA : {str(e)}")
-
-    # 3. Apply User Overrides (Manual corrections from React UI)
-    fields_to_override = ["firstName", "lastName", "email", "phone", "university", "field_of_study", "degree_level"]
-    for field in fields_to_override:
-        if field in user_overrides and user_overrides[field]:
-            data[field] = user_overrides[field]
-
-    # Replace lists if the user edited them in the frontend tables
-    for list_field in ["skills", "experiences", "languages", "soft_skills"]:
-        if list_field in user_overrides and isinstance(user_overrides[list_field], list):
-            data[list_field] = user_overrides[list_field]
-
-    # 4. Email & OTP Verification
-    email = data.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="L'email est requis (non détecté dans le CV).")
+    data = ask_ai_to_format(extract_text_from_pdf(pdf_bytes))
     
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé.")
+    for k, v in overrides_data.items():
+        if v: data[k] = v
 
+    email = data.get("email")
+    if not email: raise HTTPException(status_code=400, detail="Email required")
+    if db.query(User).filter(User.email == email).first(): raise HTTPException(status_code=400, detail="Email exists")
+    
     otp_code = prefs_data.get("otp_code")
     entry = otp_store.get(email)
-    
-    if not entry:
-        raise HTTPException(status_code=400, detail="Veuillez d'abord demander un code OTP.")
-    if str(entry["code"]) != str(otp_code).strip():
-        raise HTTPException(status_code=400, detail="Le code OTP est invalide.")
-    
-    otp_store.pop(email, None) # OTP used, remove it
+    if not entry or str(entry["code"]) != str(otp_code).strip(): raise HTTPException(status_code=400, detail="OTP Error")
+    otp_store.pop(email, None)
 
     try:
-        # 5. Database Insertion: USER
-        # Using hash_password(password) which uses SHA-256 + Bcrypt
         user = User(email=email, password=hash_password(password), role="student")
-        db.add(user)
-        db.flush() # Get user.id
-
-        # 6. Database Insertion: STUDENT
-        student = Student(
-            user_id=user.id,
-            first_name=data.get("firstName"),
-            last_name=data.get("lastName"),
-            university=data.get("university"),
-            field_of_study=data.get("field_of_study"),
-            degree_level=data.get("degree_level"),
-            phone=data.get("phone"),
-        )
-        db.add(student)
-        db.flush() # Get student.id
-
-        # 7. Database Insertion: CV (storing binary PDF)
-        cv = CV(
-            student_id=student.id,
-            title=f"CV_{data.get('lastName')}",
-            file_data=pdf_bytes,
-            file_name=file.filename or "cv.pdf",
-        )
-        db.add(cv)
-        db.flush() # Get cv.id
-
-        # 8. Loop: Adding Skills
-        for s in data.get("skills", []):
-            db.add(Skill(
-                cv_id=cv.id, 
-                name=s.get("name"), 
-                category=s.get("category", "Tech"), 
-                level=s.get("level", "Intermédiaire")
-            ))
-
-        # 9. Loop: Adding Experiences
-        for exp in data.get("experiences", []):
-            db.add(Experience(
-                cv_id=cv.id,
-                company_name=clean_company(exp.get("company")),
-                role=exp.get("position"),
-                description=exp.get("description"),
-                start_date=clean_date(exp.get("start_date")),
-                end_date=clean_date(exp.get("end_date")),
-            ))
-
-        # 10. Loop: Adding Languages
-        for lang in data.get("languages", []):
-            db.add(Language(
-                cv_id=cv.id, 
-                name=lang.get("name"), 
-                level=lang.get("level", "B1")
-            ))
-
-        # 11. Loop: Adding Soft Skills
-        for ss in data.get("soft_skills", []):
-            db.add(SoftSkill(
-                cv_id=cv.id, 
-                name=ss.get("name"), 
-                level=ss.get("level", "Moyen")
-            ))
-
-        # 12. Database Insertion: PREFERENCES
-        preference = Preference(
-            student_id   = student.id,
-            availability = prefs_data.get("availability", "Immédiate"),
-            sectors      = ",".join(prefs_data.get("sectors", [])),
-            notif_offres = prefs_data.get("notifs", {}).get("offres", True),
-            notif_hebdo  = prefs_data.get("notifs", {}).get("hebdo",  True),
-            notif_recrut = prefs_data.get("notifs", {}).get("recrut", True),
-        )
-        db.add(preference)
-
-        # 13. Final Commit
+        db.add(user); db.flush()
+        student = Student(user_id=user.id, first_name=data.get("firstName"), last_name=data.get("lastName"), university=data.get("university"), field_of_study=data.get("field_of_study"), degree_level=data.get("degree_level"), phone=data.get("phone"))
+        db.add(student); db.flush()
+        cv = CV(student_id=student.id, title="CV", file_data=pdf_bytes, file_name=file.filename or "cv.pdf")
+        db.add(cv); db.flush()
+        for s in data.get("skills", []): db.add(Skill(cv_id=cv.id, name=s.get("name"), category=s.get("category", "Tech"), level=s.get("level")))
+        for exp in data.get("experiences", []): db.add(Experience(cv_id=cv.id, company_name=clean_company(exp.get("company")), role=exp.get("position"), description=exp.get("description"), start_date=clean_date(exp.get("start_date")), end_date=clean_date(exp.get("end_date"))))
+        for lang in data.get("languages", []): db.add(Language(cv_id=cv.id, name=lang.get("name"), level=lang.get("level")))
+        for ss in data.get("soft_skills", []): db.add(SoftSkill(cv_id=cv.id, name=ss.get("name"), level=ss.get("level")))
+        db.add(Preference(student_id=student.id, availability=prefs_data.get("availability", "Immédiate"), sectors=",".join(prefs_data.get("sectors", []))))
         db.commit()
-        return {"status": "success", "message": "Inscription automatique réussie", "email": email}
-
+        return {"status": "success", "email": email}
     except Exception as e:
-        db.rollback()
-        print(f"CRITICAL ERROR DURING AUTO-REG: {str(e)}") # Visible in your Uvicorn console
-        raise HTTPException(status_code=500, detail=f"Erreur d'insertion en base : {str(e)}")
+        db.rollback(); raise HTTPException(status_code=500, detail=str(e))
 
-# ════════════════════════════════════════════════
-# 2. Parse CV (sans créer de compte)
-# ════════════════════════════════════════════════
 @router.post("/parse-cv")
 async def parse_cv(file: UploadFile = File(...)):
-    """Parse le CV et retourne les données structurées sans créer de compte."""
     pdf_bytes = await file.read()
-    raw_text  = extract_text_from_pdf(pdf_bytes)
-    if not raw_text.strip():
-        raise HTTPException(status_code=422, detail="PDF illisible ou scanné.")
-    return ask_ai_to_format(raw_text)
+    return ask_ai_to_format(extract_text_from_pdf(pdf_bytes))
 
+@router.post("/register/company/request")
+def register_company_request(data: CompanyCreate, db: Session = Depends(get_db)):
+    print(f"DEBUG: Company registration request for email: {data.email}")
+    
+    # Check Company table
+    existing_company = db.query(Company).filter(Company.email == data.email).first()
+    if existing_company:
+        print(f"DEBUG: Email {data.email} already exists in companies table")
+        raise HTTPException(status_code=400, detail="Une demande avec cet email existe déjà dans notre base entreprises.")
+    
+    # Check User table
+    existing_user = db.query(User).filter(User.email == data.email).first()
+    if existing_user:
+        print(f"DEBUG: Email {data.email} already exists in users table")
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé par un compte utilisateur (Étudiant ou Admin).")
 
+    try:
+        company = Company(
+            name=data.name, 
+            email=data.email, 
+            activity=data.industry or data.activity, 
+            city=data.city, 
+            phone=data.phone, 
+            description=data.description, 
+            status="pending",
+            is_verified=False
+        )
+        db.add(company)
+        db.commit()
+        print(f"DEBUG: Company request created successfully for {data.email}")
+        return {"message": "Votre demande a été envoyée avec succès."}
+    except Exception as e:
+        db.rollback()
+        print(f"DEBUG: Error creating company request: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la demande: {str(e)}")
 
-
-# ════════════════════════════════════════════════
-# 4. Register Company
-# ════════════════════════════════════════════════
-@router.post("/register/company")
-def register_company(data: CompanyCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = User(email=data.email, password=hash_password(data.password), role="company")
-    db.add(user)
-    db.flush()
-
-    company = Company(
-        user_id=user.id,
-        name=data.name,
-        industry=data.industry,
-        location=data.location,
-    )
-    db.add(company)
-    db.commit()
-
-    return {"message": "Company registered successfully", "company_id": company.id}
-
-
-
-
-# ════════════════════════════════════════════════
-# 5. Envoyer OTP
-# ════════════════════════════════════════════════
 @router.post("/send-otp")
 async def send_otp(email: str = Form(...)):
     otp = generate_otp()
     otp_store[email] = {"code": otp, "expires_at": time.time() + 600}
-    try:
-        send_otp_email(email, otp)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Impossible d'envoyer l'email : {str(e)}")
-    return {"message": f"Code OTP envoyé à {email}"}
+    send_otp_email(email, otp)
+    return {"message": "OTP sent"}
 
-
-# ════════════════════════════════════════════════
-# 6. Vérifier OTP
-# ════════════════════════════════════════════════
 @router.post("/verify-otp")
 async def verify_otp(email: str = Form(...), code: str = Form(...)):
     entry = otp_store.get(email)
-    if not entry:
-        raise HTTPException(status_code=400, detail="Aucun code envoyé pour cet email.")
-    if time.time() > entry["expires_at"]:
-        otp_store.pop(email, None)
-        raise HTTPException(status_code=400, detail="Code expiré.")
-    if entry["code"] != code.strip():
-        raise HTTPException(status_code=400, detail="Code incorrect.")
-    return {"verified": True}
+    if entry and entry["code"] == code.strip(): return {"verified": True}
+    raise HTTPException(status_code=400, detail="Invalid OTP")
 
-
-# ════════════════════════════════════════════════
-# 7. Login
-# ════════════════════════════════════════════════
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-from fastapi.security import OAuth2PasswordRequestForm
-from datetime import datetime, timedelta
-from jose import jwt
-from passlib.context import CryptContext
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-# Configuration Sécurité
+# Security
 SECRET_KEY = "talentia_secret_key_change_in_production"
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 1440  # 24h
-
-# Context pour le hachage (Bcrypt)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+TOKEN_EXPIRE_MINUTES = 1440
+# pwd_context removed, using app.utils.security
 
 def create_access_token(data: dict) -> str:
-    """Génère un JWT signé."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
-
-from sqlalchemy.orm import  joinedload
 @router.post("/login")
-def login(
-    form: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
-    # 1. Simple fetch - no joinedload to avoid the AttributeError
-    user = db.query(User).filter(User.email == form.username.strip().lower()).first()
-
-    # 2. Check if user exists and password is correct
-    if not user or not verify_password(form.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou mot de passe incorrect",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # 3. Prepare the base data for the token
-    token_data = {
-        "sub": user.email,
-        "role": user.role,
-        "id": user.id
+def login(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == username.strip().lower()).first()
+    target_user = None
+    if user and verify_password(password, user.password): target_user = user
+    else:
+        company = db.query(Company).filter(Company.email == username.strip().lower()).first()
+        if company and company.status == "verified" and verify_password(password, company.password): target_user = company
+    if not target_user: raise HTTPException(status_code=401, detail="Incorrect email/password")
+    token_data = {"sub": target_user.email, "role": target_user.role, "id": target_user.id}
+    if target_user.role == "student":
+        s = db.query(Student).filter(Student.user_id == target_user.id).first()
+        if s: token_data.update({"student_id": s.id, "name": f"{s.first_name} {s.last_name}"})
+    elif target_user.role == "company":
+        token_data.update({"company_id": target_user.id, "name": target_user.name})
+    resp = {
+        "access_token": create_access_token(token_data), 
+        "token_type": "bearer", 
+        "role": target_user.role,
+        "name": token_data.get("name")
     }
+    if target_user.role == "company":
+        resp["company_id"] = target_user.id
+    return resp
 
-    # 4. MANUALLY query the profile based on the role
-    if user.role == "student":
-        student_profile = db.query(Student).filter(Student.user_id == user.id).first()
-        if student_profile:
-            token_data.update({
-                "student_id": student_profile.id,
-                "name": f"{student_profile.first_name} {student_profile.last_name}"
-            })
-            
-    elif user.role == "company":
-        # Make sure Company is imported at the top of the file
-        company_profile = db.query(Company).filter(Company.user_id == user.id).first()
-        if company_profile:
-            token_data.update({
-                "company_id": company_profile.id,
-                "name": company_profile.name
-            })
-
-    # 5. Generate the JWT
-    access_token = create_access_token(data=token_data)
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "role": user.role
-    }
-# ════════════════════════════════════════════════
-# 6. Télécharger le CV PDF
-# ════════════════════════════════════════════════
 @router.get("/cv/{cv_id}/download")
 def download_cv(cv_id: int, db: Session = Depends(get_db)):
     cv = db.query(CV).filter(CV.id == cv_id).first()
-    if not cv or not cv.file_data:
-        raise HTTPException(status_code=404, detail="CV introuvable")
-    return Response(
-        content=cv.file_data,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{cv.file_name or "cv.pdf"}"'}
-    )
+    if not cv: raise HTTPException(status_code=404)
+    return Response(content=cv.file_data, media_type="application/pdf")

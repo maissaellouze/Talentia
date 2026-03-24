@@ -1,7 +1,7 @@
 import React from 'react';
 import { JOBS_DEMO } from '../../data/cvData';
 
-export default function Hero({ onSignup }) {
+export default function Hero({ onSignup, onCompany }) {
   return (
     <section style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
@@ -43,7 +43,7 @@ export default function Hero({ onSignup }) {
             Importez votre CV, laissez notre IA analyser votre profil et recevez des opportunités parfaitement adaptées à vos compétences.
           </p>
 
-          <div className="fade-up-3" style={{ display: 'flex', gap: 12 }}>
+          <div className="fade-up-3" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={onSignup} style={{
               height: 52, padding: '0 32px', borderRadius: 12,
               background: '#0d9488', border: 'none', color: '#fff',
@@ -52,6 +52,14 @@ export default function Hero({ onSignup }) {
               transition: 'all .25s',
             }}>
               Créer mon profil d'étude
+            </button>
+            <button onClick={onCompany} style={{
+              height: 52, padding: '0 28px', borderRadius: 12,
+              background: '#fff', border: '1.5px solid #0d9488',
+              color: '#0d9488', fontSize: 15, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'all .25s',
+            }}>
+              Espace Entreprise
             </button>
             <button style={{
               height: 52, padding: '0 28px', borderRadius: 12,

@@ -23,6 +23,9 @@ class SocieteBase(BaseModel):
 
 class SocieteCreate(SocieteBase):
     name: str
+    email: str
+    industry: Optional[str] = None
+    description: Optional[str] = None
 
 class SocieteUpdate(SocieteBase):
     pass

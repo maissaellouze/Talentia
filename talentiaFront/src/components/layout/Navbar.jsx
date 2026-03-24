@@ -3,7 +3,7 @@ import Logo from '../ui/Logo';
 
 const links = ['Fonctionnalités', 'Comment ça marche', 'Recruteurs'];
 
-export default function Navbar({ onLogin, onSignup }) {
+export default function Navbar({ onLogin, onSignup, onCompany }) {
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
@@ -32,6 +32,13 @@ export default function Navbar({ onLogin, onSignup }) {
               fontSize: 14, color: '#6b7280', textDecoration: 'none', fontWeight: 500,
             }}>{l}</a>
           ))}
+         <a href="/admin" style={{
+            fontSize: 14, color: '#94a3b8', textDecoration: 'none', fontWeight: 500,
+          }}>Admin</a>
+          <button onClick={onCompany} style={{
+            fontSize: 14, color: '#0d9488', textDecoration: 'none', fontWeight: 600,
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit'
+          }}>Espace Recruteur</button>
         </div>
 
         {/* CTAs */}

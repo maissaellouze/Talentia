@@ -14,11 +14,12 @@ from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
 from app.models.preference import Preference
-
-# ✅ Import routers
 from app.routers.societe import router as societe_router
+
+# Importation des routers
 from app.routers import auth
-from app.routers import reports
+from app.routers import company_dashboard
+from app.routers import admin
 
 # ✅ 1. créer app d'abord
 app = fastapi.FastAPI(
@@ -30,7 +31,8 @@ app = fastapi.FastAPI(
 # ✅ 2. middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=[ "http://localhost:3000",
+    "http://localhost:5173",],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,10 +41,13 @@ app.add_middleware(
 # ✅ 3. base de données
 Base.metadata.create_all(bind=engine)
 
-# ✅ 4. include routers
+# Inclusion des routes
 app.include_router(auth.router)
-app.include_router(reports.router)
+
+# Include your routes
 app.include_router(societe_router)
+app.include_router(company_dashboard.router)
+app.include_router(admin.router)
 
 # route test
 @app.get("/")

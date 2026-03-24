@@ -10,12 +10,13 @@ const getCompanyColor = (id) => {
   return colors[id % colors.length];
 };
 
-export default function CompanyCard({ company }) {
+export default function CompanyCard({ company, onClick }) {
   const [hovered, setHovered] = useState(false);
   const color = getCompanyColor(company.id || 0);
 
   return (
     <div
+      onClick={() => onClick && onClick(company)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
