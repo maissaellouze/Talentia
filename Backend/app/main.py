@@ -14,6 +14,9 @@ from app.models.language import Language
 from app.models.certificate import Certificate
 from app.models.club import Club
 from app.models.preference import Preference
+from app.routers import auth, reports, societe, opportunities
+from app.routers import opportunities
+# ✅ Import routers
 from app.routers.societe import router as societe_router
 
 # Importation des routers
@@ -46,6 +49,7 @@ app.include_router(auth.router)
 
 # Include your routes
 app.include_router(societe_router)
+app.include_router(opportunities.router)
 app.include_router(company_dashboard.router)
 app.include_router(admin.router)
 
