@@ -12,7 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
 import Modal from './components/modal/Modal';
 import CompanyRegisterModal from './components/modal/CompanyRegisterModal';
-import OpportunitiesPage from './pages/OpportunitiesPage';
+
 
 export default function App() {
   const [modal, setModal] = useState(null);
