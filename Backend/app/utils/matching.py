@@ -1,4 +1,5 @@
 def calculate_match_score(student_data, internship):
+    student_skills = [s.name.lower() for s in student_data["skills"]]
     """
     Calculates a weighted match score based on the full student profile.
     Weights: Technical Skills (40%), Experience (30%), Education/Languages (20%), Preferences (10%).

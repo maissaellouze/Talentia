@@ -25,17 +25,20 @@ def get_ranked_opportunities(student_id: int, db: Session = Depends(get_db)):
         
     cv = db.query(CV).filter(CV.student_id == student_id).first()
     if not cv:
-        raise HTTPException(status_code=404, detail="CV not found for this student")
-
-    student_profile = {
-        "skills": db.query(Skill).filter(Skill.cv_id == cv.id).all(),
-        "experiences": db.query(Experience).filter(Experience.cv_id == cv.id).all(),
-        "education": db.query(Education).filter(Education.cv_id == cv.id).all(),
-        "languages": db.query(Language).filter(Language.cv_id == cv.id).all(),
-        "soft_skills": db.query(SoftSkill).filter(SoftSkill.cv_id == cv.id).all(),
-        "preferences": db.query(Preference).filter(Preference.student_id == student_id).first()
-    }
-
+        student_profile = {
+            "skills": [], "experiences": [], "education": [],
+            "languages": [], "soft_skills": [], "preferences": None
+        }
+    else:
+        student_profile = {
+            "skills": db.query(Skill).filter(Skill.cv_id == cv.id).all(),
+            "experiences": db.query(Experience).filter(Experience.cv_id == cv.id).all(),
+            "education": db.query(Education).filter(Education.cv_id == cv.id).all(),
+            "languages": db.query(Language).filter(Language.cv_id == cv.id).all(),
+            "soft_skills": db.query(SoftSkill).filter(SoftSkill.cv_id == cv.id).all(),
+            "preferences": db.query(Preference).filter(Preference.student_id == student_id).first()
+        }
+    
     # 2. Get all real internships from the DB
     all_internships = db.query(Internship, Societe).join(Societe, Internship.company_id == Societe.id).all()
     results = []
