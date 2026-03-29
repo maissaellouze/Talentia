@@ -42,6 +42,9 @@ export default function StudentSidebar() {
         <NavItem active={location.pathname === '/companies'} onClick={() => navigate('/companies')}>
           <span style={{ marginRight: 10 }}>🏢</span> Entreprises
         </NavItem>
+        <NavItem active={location.pathname === '/opportunities'} onClick={() => navigate('/opportunities')}>
+          <span style={{ marginRight: 10 }}>🎯</span> Opportunités
+        </NavItem>
       </nav>
 
       <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 12 }}>
