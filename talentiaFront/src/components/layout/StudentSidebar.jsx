@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../ui/Logo';
 
@@ -21,7 +21,8 @@ export default function StudentSidebar() {
       flexDirection: 'column',
       position: 'sticky',
       top: 0,
-      height: '100vh'
+      height: '100vh',
+      flexShrink: 0
     }}>
       {/* Branding */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '3rem', padding: '0 0.5rem' }}>
@@ -31,50 +32,89 @@ export default function StudentSidebar() {
         </span>
       </div>
 
-      <div style={{ marginBottom: '2rem', padding: '0 0.5rem' }}>
+      <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
         <h2 style={{ fontSize: 12, fontWeight: 700, margin: 0, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Menu Étudiant</h2>
       </div>
       
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-        <NavItem active={location.pathname === '/home'} onClick={() => navigate('/home')}>
-          <span style={{ marginRight: 10 }}>🏠</span> Dashboard
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        <NavItem active={location.pathname === '/home'} onClick={() => navigate('/home')}
+          icon="🏠">
+          Dashboard
         </NavItem>
-        <NavItem active={location.pathname === '/companies'} onClick={() => navigate('/companies')}>
-          <span style={{ marginRight: 10 }}>🏢</span> Entreprises
+        <NavItem active={location.pathname === '/companies'} onClick={() => navigate('/companies')}
+          icon="🗂️">
+          Entreprises
         </NavItem>
-        <NavItem active={location.pathname === '/opportunities'} onClick={() => navigate('/opportunities')}>
-          <span style={{ marginRight: 10 }}>🎯</span> Opportunités
+        <NavItem active={location.pathname === '/opportunities'} onClick={() => navigate('/opportunities')}
+          icon="💼">
+          Opportunités
+        </NavItem>
+        <NavItem active={location.pathname === '/rapports'} onClick={() => navigate('/rapports')}
+          icon="📚">
+          Rapports PFE
         </NavItem>
       </nav>
 
-      <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ paddingTop: '1.5rem', borderTop: '1px solid #f3f4f6' }}>
         <button 
           onClick={handleLogout}
           style={{ 
             display: 'flex', alignItems: 'center', gap: 10, padding: '12px 1rem', 
             borderRadius: 12, border: 'none', background: 'transparent', color: '#6b7280',
-            fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+            width: '100%'
           }}
           onMouseOver={e => e.currentTarget.style.background = '#f9fafb'}
           onMouseOut={e => e.currentTarget.style.background = 'transparent'}
         >
-          <span>🚪</span> Déconnexion
+          <span style={{ fontSize: 18 }}>🔖</span> Déconnexion
         </button>
       </div>
     </aside>
   );
 }
 
-function NavItem({ active, children, onClick }) {
+function NavItem({ active, children, onClick, icon }) {
+  const [hovered, setHovered] = useState(false);
+  const isActive = active;
+
   return (
-    <button onClick={onClick} style={{
-      textAlign: 'left', padding: '12px 1rem', borderRadius: 14, border: 'none',
-      background: active ? '#f0fdfa' : 'transparent',
-      color: active ? '#0d9488' : '#6b7280',
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      fontWeight: active ? 700 : 500, fontSize: 14, cursor: 'pointer',
-      display: 'flex', alignItems: 'center'
-    }}>
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        textAlign: 'left',
+        padding: '11px 1rem',
+        borderRadius: 12,
+        border: 'none',
+        background: isActive ? '#f0fdfa' : hovered ? '#f9fafb' : 'transparent',
+        color: isActive ? '#0d9488' : hovered ? '#374151' : '#6b7280',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        fontWeight: isActive ? 700 : 500,
+        fontSize: 14,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        overflow: 'hidden',
+        width: '100%',
+      }}
+    >
+      {/* Green left accent bar for active item */}
+      {isActive && (
+        <span style={{
+          position: 'absolute',
+          left: 0,
+          top: '20%',
+          height: '60%',
+          width: 3,
+          borderRadius: '0 3px 3px 0',
+          background: '#0d9488',
+        }} />
+      )}
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
       {children}
     </button>
   );

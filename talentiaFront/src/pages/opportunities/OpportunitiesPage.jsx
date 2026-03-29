@@ -72,18 +72,20 @@ function OpportunityCard({ item, index }) {
       style={{
         background: '#fff',
         borderRadius: 16,
-        border: isHighlighted
-          ? `2px solid #0d9488`
-          : hovered ? '1.5px solid #0d9488' : '1.5px solid #e5e5ec',
-        padding: 24,
+        border: hovered
+          ? '2px solid #0d9488'
+          : isHighlighted
+            ? '2px solid #0d9488'
+            : '1.5px solid #e5e5ec',
+        padding: hovered || isHighlighted ? '23.5px' : '24px', // compensate 0.5px border diff
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
-        transition: 'all 0.25s ease',
+        transition: 'all 0.22s ease',
         boxShadow: hovered
-          ? '0 8px 32px rgba(13,148,136,.12)'
+          ? '0 8px 28px rgba(13,148,136,.15), 0 2px 8px rgba(13,148,136,.08)'
           : '0 2px 8px rgba(0,0,0,.04)',
-        transform: hovered ? 'translateY(-3px)' : 'none',
+        transform: hovered ? 'translateY(-4px)' : 'none',
         cursor: 'default',
         animationDelay: `${index * 0.05}s`,
         animation: 'opp-fadeUp 0.4s ease both',
@@ -155,25 +157,12 @@ function OpportunityCard({ item, index }) {
         <button
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            padding: '9px 16px', borderRadius: 10, border: `1.5px solid ${isHighlighted ? '#0d9488' : '#e5e5ec'}`,
-            background: isHighlighted ? '#0d9488' : 'transparent',
-            color: isHighlighted ? '#fff' : '#374151',
+            padding: '9px 16px', borderRadius: 10,
+            border: '1.5px solid #0d9488',
+            background: hovered || isHighlighted ? '#0d9488' : 'transparent',
+            color: hovered || isHighlighted ? '#fff' : '#0d9488',
             fontSize: 13, fontWeight: 600, cursor: 'pointer',
             transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => {
-            if (!isHighlighted) {
-              e.currentTarget.style.background = '#f0fdfa';
-              e.currentTarget.style.color = '#0d9488';
-              e.currentTarget.style.borderColor = '#0d9488';
-            }
-          }}
-          onMouseLeave={e => {
-            if (!isHighlighted) {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#374151';
-              e.currentTarget.style.borderColor = '#e5e5ec';
-            }
           }}
         >
           Voir l'offre →
