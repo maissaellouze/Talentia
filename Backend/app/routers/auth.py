@@ -32,13 +32,23 @@ from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
 from app.schemas.company_schema import SocieteCreate as CompanyCreate
-
-# ── Configuration IA ──
-HF_TOKEN = "your token "
-MODEL_ID  = "Qwen/Qwen2.5-7B-Instruct"
-client    = InferenceClient(model=MODEL_ID, token=HF_TOKEN)
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/auth", tags=["Registration"])
+
+# ── Configuration IA ──
+from huggingface_hub import InferenceClient
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+client = InferenceClient(
+    model="mistralai/Mistral-7B-Instruct-v0.2",
+    token=HF_TOKEN
+)
 
 # ── Config email ──
 SMTP_HOST     = "smtp.gmail.com"

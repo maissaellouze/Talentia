@@ -23,6 +23,8 @@ from app.routers.societe import router as societe_router
 from app.routers import auth
 from app.routers import company_dashboard
 from app.routers import admin
+from app.routers import reports
+
 
 # ✅ 1. créer app d'abord
 app = fastapi.FastAPI(
@@ -52,6 +54,9 @@ app.include_router(societe_router)
 app.include_router(opportunities.router)
 app.include_router(company_dashboard.router)
 app.include_router(admin.router)
+
+
+app.include_router(reports.router)
 
 # route test
 @app.get("/")

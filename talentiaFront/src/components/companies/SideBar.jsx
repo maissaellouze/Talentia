@@ -32,6 +32,8 @@ const Sidebar = ({ role = 'student', activeTab, setActiveTab }) => {
     { label: "Dashboard", path: "/home", icon: <DashboardIcon /> },
     { label: "Entreprises", path: "/companies", icon: <BusinessIcon /> },
     { label: "Opportunités", path: "/opportunities", icon: <WorkIcon /> },
+    { label: "Rapports PFE", path: "/reports", icon: <WorkIcon /> },
+ 
   ];
 
   const companyItems = [
@@ -160,3 +162,9 @@ const Sidebar = ({ role = 'student', activeTab, setActiveTab }) => {
 };
 
 export default Sidebar;
+const studentItems = [
+  { label: "Dashboard", path: "/home", icon: <DashboardIcon /> },
+  { label: "Entreprises", path: "/companies", icon: <BusinessIcon /> },
+  { label: "Opportunités", path: "/opportunities", icon: <WorkIcon /> },
+  { label: "Rapports PFE", path: "/reports", icon: <WorkIcon /> },
+];

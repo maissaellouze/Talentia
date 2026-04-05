@@ -12,7 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
 import Modal from './components/modal/Modal';
 import CompanyRegisterModal from './components/modal/CompanyRegisterModal';
-
+import Reports from "../pages/Reports";
 
 export default function App() {
   const [modal, setModal] = useState(null);
@@ -47,6 +47,10 @@ export default function App() {
 
         {/* Route 4: AI Recommendations Page */}
         <Route path="/opportunities" element={<OpportunitiesPage />} />
+        
+        {/*REPORT PFE*/}
+        <Route path="/reports" element={<Reports />} />
+
       </Routes>
 
       {/* Global Modals for Login/Signup */}

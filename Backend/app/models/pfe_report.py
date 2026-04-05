@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.database import Base
+from datetime import datetime
 
 
 class PFEReport(Base):
@@ -14,3 +15,4 @@ class PFEReport(Base):
     embedding = Column(Text)  # JSON string
     company_id   = Column(Integer, ForeignKey("companies.id"), nullable=True)
     company = relationship("Societe", back_populates="pfe_reports")  # ← add this
+    created_at = Column(DateTime, default=datetime.utcnow)
