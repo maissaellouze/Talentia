@@ -37,8 +37,8 @@ export default function StepCV({ onAnalyze, onSkip }) {
       const fd = new FormData();
       fd.append('file', file);
 
-      const res = await fetch(`${API}/parse-cv`, {
-        method: 'POST',
+const res = await fetch(`${API}/auth/parse-cv`, {
+          method: 'POST',
         body: fd,
       });
 

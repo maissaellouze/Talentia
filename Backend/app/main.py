@@ -37,6 +37,7 @@ app = fastapi.FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[ "http://localhost:3000",
+                   "http://localhost:3010",
     "http://localhost:5173",],
     allow_credentials=True,
     allow_methods=["*"],
@@ -44,6 +45,7 @@ app.add_middleware(
 )
 
 # ✅ 3. base de données
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 # Inclusion des routes

@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import fitz  # PyMuPDF
 from fastapi import APIRouter, Depends, Response, UploadFile, File, Form, HTTPException, status
+from groq import Groq
 from sqlalchemy.orm import Session, joinedload
 from jose import JWTError, jwt
 from huggingface_hub import InferenceClient
@@ -32,6 +33,7 @@ from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
 from app.schemas.company_schema import SocieteCreate as CompanyCreate
+<<<<<<< Updated upstream
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/auth", tags=["Registration"])
@@ -49,6 +51,19 @@ client = InferenceClient(
     model="mistralai/Mistral-7B-Instruct-v0.2",
     token=HF_TOKEN
 )
+=======
+from dotenv import load_dotenv
+# ── Configuration IA ──
+
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Initialisation du client Groq
+groq_client = Groq(api_key=GROQ_API_KEY)
+
+# Modèle recommandé (Gratuit, Rapide et Puissant)
+GROQ_MODEL = "llama-3.3-70b-versatile"
+router = APIRouter(prefix="/auth", tags=["Registration"])
+>>>>>>> Stashed changes
 
 # ── Config email ──
 SMTP_HOST     = "smtp.gmail.com"
@@ -143,16 +158,55 @@ def clean_experiences(experiences: list) -> list:
         "start_date": clean_date(e.get("start_date")),
         "end_date": clean_date(e.get("end_date")),
     } for e in experiences if isinstance(e, dict)]
-
 def ask_ai_to_format(raw_text: str) -> dict:
-    system_instruction = "Tu es un expert RH spécialisé dans l'extraction de CV. Réponds UNIQUEMENT avec du JSON valide."
-    prompt = f"Extrais les données du CV en JSON. Format: email, firstName, lastName, phone, city, university, field_of_study, degree_level, skills, education, experiences, languages, soft_skills. \n\n CV: {raw_text}"
-    response = client.chat_completion(messages=[{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}], max_tokens=2500, temperature=0.1)
-    content = response.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
-    try: data = json.loads(content)
-    except: raise HTTPException(status_code=422, detail="IA JSON Error")
-    data["experiences"] = clean_experiences(data.get("experiences", []))
-    return data
+    system_instruction = (
+        "Tu es un expert RH. Tu extrais les informations d'un CV. "
+        "Réponds UNIQUEMENT par un objet JSON valide, sans texte avant ou après."
+    )
+    
+    # Limiter le texte pour éviter de dépasser les limites de tokens d'entrée
+    input_text = raw_text[:4000] 
+    
+    prompt = f"""
+    Extrais les données de ce CV au format JSON suivant :
+    {{
+      "email": "", "firstName": "", "lastName": "", "phone": "", 
+      "university": "", "field_of_study": "", "degree_level": "", 
+      "skills": [{{"name": "", "category": "", "level": ""}}],
+      "experiences": [{{"company": "", "position": "", "description": "", "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD ou null"}}],
+      "languages": [{{"name": "", "level": ""}}],
+      "soft_skills": [{{"name": "", "level": ""}}]
+    }}
+    
+    CV : {input_text}
+    """
+
+    try:
+        # Appel à l'API Groq
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt}
+            ],
+            model=GROQ_MODEL,
+            temperature=0.1,
+            stream=False,
+            response_format={"type": "json_object"} # Force le format JSON
+        )
+
+        content = chat_completion.choices[0].message.content.strip()
+        data = json.loads(content)
+        
+        # Nettoyage des expériences avec vos fonctions existantes
+        data["experiences"] = clean_experiences(data.get("experiences", []))
+        return data
+
+    except Exception as e:
+        print(f"Erreur Groq : {str(e)}")
+        raise HTTPException(
+            status_code=503, 
+            detail="Le service d'analyse IA (Groq) est indisponible."
+        )
 
 # ════════════════════════════════════════════════
 # ROUTES
