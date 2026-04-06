@@ -6,6 +6,8 @@ import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import CompaniesDashboard from './pages/CompaniesDashboard';
 import OpportunitiesPage from './pages/opportunities/OpportunitiesPage';
+import OpportunityDetailPage from './pages/opportunities/OpportunityDetailPage';
+import CompanyApplicationsPage from './pages/opportunities/CompanyApplicationsPage';
 
 // Components
 import AdminDashboard from './pages/AdminDashboard';
@@ -47,6 +49,12 @@ export default function App() {
 
         {/* Route 4: AI Recommendations Page */}
         <Route path="/opportunities" element={<OpportunitiesPage />} />
+
+        {/* Route 5: Opportunity Detail (Student) */}
+        <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
+
+        {/* Route 6: Company Applications for an opportunity */}
+        <Route path="/company-dashboard/opportunities/:id/applications" element={<CompanyApplicationsPage />} />
       </Routes>
 
       {/* Global Modals for Login/Signup */}

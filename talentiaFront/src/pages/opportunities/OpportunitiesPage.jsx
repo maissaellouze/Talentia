@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import StudentSidebar from '../../components/layout/StudentSidebar';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ function SkeletonCard() {
 
 // ─── Opportunity Card ────────────────────────────────────────────────────────
 
-function OpportunityCard({ item, index }) {
+function OpportunityCard({ item, index, onView }) {
   const [hovered, setHovered] = useState(false);
   const internship = item?.internship || {};
   const sector = internship.sector || 'Stage';
@@ -155,6 +156,7 @@ function OpportunityCard({ item, index }) {
       {/* Action row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button
+          onClick={() => onView && onView(item?.internship?.id)}
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '9px 16px', borderRadius: 10,
@@ -187,6 +189,7 @@ function OpportunityCard({ item, index }) {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 const OpportunitiesPage = () => {
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -508,7 +511,12 @@ const OpportunitiesPage = () => {
                 </div>
               ) : (
                 filtered.map((item, index) => (
-                  <OpportunityCard key={item?.internship?.id || index} item={item} index={index} />
+                  <OpportunityCard
+                    key={item?.internship?.id || index}
+                    item={item}
+                    index={index}
+                    onView={(id) => navigate(`/opportunities/${id}`)}
+                  />
                 ))
               )}
             </div>

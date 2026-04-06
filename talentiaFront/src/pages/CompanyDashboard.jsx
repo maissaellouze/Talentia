@@ -197,7 +197,19 @@ export default function CompanyDashboard() {
                         <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>{opp.location} • {opp.contract_type}</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-                        <div style={{ color: '#0d9488', fontWeight: 600, fontSize: 14 }}>{opp.applications_count || 0} candidatures</div>
+                        <button
+                          onClick={() => navigate(`/company-dashboard/opportunities/${opp.id}/applications`)}
+                          style={{
+                            background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1',
+                            padding: '7px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                            fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
+                            transition: 'all 0.18s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#0d9488'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#f0fdfa'; e.currentTarget.style.color = '#0d9488'; }}
+                        >
+                          👥 {opp.applications_count || 0} candidature{opp.applications_count !== 1 ? 's' : ''}
+                        </button>
                         <button onClick={() => setEditingOpportunity(opp)} style={{ background: '#f3f4f6', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Modifier</button>
                         <button onClick={() => handleDeleteOpportunity(opp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontSize: 12, cursor: 'pointer' }}>Supprimer</button>
                       </div>

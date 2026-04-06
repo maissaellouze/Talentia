@@ -67,7 +67,7 @@ export default function StudentSidebar() {
           onMouseOver={e => e.currentTarget.style.background = '#f9fafb'}
           onMouseOut={e => e.currentTarget.style.background = 'transparent'}
         >
-          <span style={{ fontSize: 18 }}>🔖</span> Déconnexion
+          <span style={{ fontSize: 18 }}>🚪</span> Déconnexion
         </button>
       </div>
     </aside>

@@ -31,3 +31,5 @@ typer-slim==0.24.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.41.0
+sentence-transformers==3.0.1
+numpy==1.24.3
