@@ -33,7 +33,6 @@ from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
 from app.schemas.company_schema import SocieteCreate as CompanyCreate
-<<<<<<< Updated upstream
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/auth", tags=["Registration"])
@@ -51,7 +50,7 @@ client = InferenceClient(
     model="mistralai/Mistral-7B-Instruct-v0.2",
     token=HF_TOKEN
 )
-=======
+
 from dotenv import load_dotenv
 # ── Configuration IA ──
 
@@ -63,7 +62,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 # Modèle recommandé (Gratuit, Rapide et Puissant)
 GROQ_MODEL = "llama-3.3-70b-versatile"
 router = APIRouter(prefix="/auth", tags=["Registration"])
->>>>>>> Stashed changes
+
 
 # ── Config email ──
 SMTP_HOST     = "smtp.gmail.com"

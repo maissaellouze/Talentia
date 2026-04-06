@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Pages
+// Pages - Tous les imports pointent maintenant vers l'intérieur de ./src
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import CompaniesDashboard from './pages/CompaniesDashboard';
 import OpportunitiesPage from './pages/opportunities/OpportunitiesPage';
-
-// Components
 import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
+import Reports from './pages/Reports'; // Correction ici : "./" au lieu de "../"
+
+// Components
 import Modal from './components/modal/Modal';
 import CompanyRegisterModal from './components/modal/CompanyRegisterModal';
-import Reports from "../pages/Reports";
 
 export default function App() {
   const [modal, setModal] = useState(null);
@@ -38,7 +38,6 @@ export default function App() {
         {/* Route 3: Companies Dashboard */}
         <Route path="/companies" element={<CompaniesDashboard />} />
 
-
         {/* Route Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
 
@@ -48,16 +47,15 @@ export default function App() {
         {/* Route 4: AI Recommendations Page */}
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         
-        {/*REPORT PFE*/}
+        {/* REPORT PFE */}
         <Route path="/reports" element={<Reports />} />
-
       </Routes>
 
       {/* Global Modals for Login/Signup */}
       {modal === 'company' ? (
         <CompanyRegisterModal onClose={() => setModal(null)} />
-      ) : modal && (
-        <Modal mode={modal} onClose={() => setModal(null)} />
+      ) : (
+        modal && <Modal mode={modal} onClose={() => setModal(null)} />
       )}
     </BrowserRouter>
   );
