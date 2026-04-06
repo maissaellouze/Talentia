@@ -19,7 +19,8 @@ try:
 except Exception as e:
     print(f"❌ Could not load from folder: {e}")
     # Fallback to name if the folder is missing a file
-    model = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=model_path)
+    #model = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=model_path)
+    model = SentenceTransformer('all-MiniLM-L6-v2', cache_folder='./models_fix')
 
 def clean_text(text: str):
     if not text:

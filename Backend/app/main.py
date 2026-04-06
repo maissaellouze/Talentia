@@ -23,6 +23,8 @@ from app.routers.societe import router as societe_router
 from app.routers import auth
 from app.routers import company_dashboard
 from app.routers import admin
+from app.routers import reports
+
 
 # ✅ 1. créer app d'abord
 app = fastapi.FastAPI(
@@ -35,6 +37,7 @@ app = fastapi.FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[ "http://localhost:3000",
+                   "http://localhost:3010",
     "http://localhost:5173",],
     allow_credentials=True,
     allow_methods=["*"],
@@ -42,6 +45,7 @@ app.add_middleware(
 )
 
 # ✅ 3. base de données
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 # Inclusion des routes
@@ -52,6 +56,9 @@ app.include_router(societe_router)
 app.include_router(opportunities.router)
 app.include_router(company_dashboard.router)
 app.include_router(admin.router)
+
+
+app.include_router(reports.router)
 
 # route test
 @app.get("/")

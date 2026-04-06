@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Pages
+// Pages - Tous les imports pointent maintenant vers l'intérieur de ./src
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import CompaniesDashboard from './pages/CompaniesDashboard';
@@ -9,12 +9,13 @@ import OpportunitiesPage from './pages/opportunities/OpportunitiesPage';
 import OpportunityDetailPage from './pages/opportunities/OpportunityDetailPage';
 import CompanyApplicationsPage from './pages/opportunities/CompanyApplicationsPage';
 
-// Components
 import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
+import Reports from './pages/Reports'; // Correction ici : "./" au lieu de "../"
+
+// Components
 import Modal from './components/modal/Modal';
 import CompanyRegisterModal from './components/modal/CompanyRegisterModal';
-
 
 export default function App() {
   const [modal, setModal] = useState(null);
@@ -40,7 +41,6 @@ export default function App() {
         {/* Route 3: Companies Dashboard */}
         <Route path="/companies" element={<CompaniesDashboard />} />
 
-
         {/* Route Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
 
@@ -49,19 +49,21 @@ export default function App() {
 
         {/* Route 4: AI Recommendations Page */}
         <Route path="/opportunities" element={<OpportunitiesPage />} />
-
         {/* Route 5: Opportunity Detail (Student) */}
         <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
 
         {/* Route 6: Company Applications for an opportunity */}
         <Route path="/company-dashboard/opportunities/:id/applications" element={<CompanyApplicationsPage />} />
+
+        {/* REPORT PFE */}
+        <Route path="/reports" element={<Reports />} />
       </Routes>
 
       {/* Global Modals for Login/Signup */}
       {modal === 'company' ? (
         <CompanyRegisterModal onClose={() => setModal(null)} />
-      ) : modal && (
-        <Modal mode={modal} onClose={() => setModal(null)} />
+      ) : (
+        modal && <Modal mode={modal} onClose={() => setModal(null)} />
       )}
     </BrowserRouter>
   );

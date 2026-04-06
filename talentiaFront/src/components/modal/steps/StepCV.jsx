@@ -3,6 +3,14 @@ import Button from '../../ui/Button';
 
 const API = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
+const COLORS = {
+  blueMain: '#4682B4',
+  blueDark: '#2B547E',
+  blueLight: '#7BAFD4',
+  border: '#E2E8F0',
+  bgLight: '#F8FAFC'
+};
+
 export default function StepCV({ onAnalyze, onSkip }) {
   const [progress, setProgress] = useState(0);
   const [running,  setRunning]  = useState(false);
@@ -28,7 +36,6 @@ export default function StepCV({ onAnalyze, onSkip }) {
     setProgress(0);
     setError(null);
 
-    // Progress bar cosmétique pendant l'appel API
     const iv = setInterval(() => {
       setProgress(p => p >= 85 ? 85 : p + 2);
     }, 80);
@@ -37,7 +44,7 @@ export default function StepCV({ onAnalyze, onSkip }) {
       const fd = new FormData();
       fd.append('file', file);
 
-      const res = await fetch(`${API}/parse-cv`, {
+      const res = await fetch(`${API}/auth/parse-cv`, {
         method: 'POST',
         body: fd,
       });
@@ -54,14 +61,14 @@ export default function StepCV({ onAnalyze, onSkip }) {
 
       setTimeout(() => {
         setRunning(false);
-        onAnalyze(data, file); // données parsées + fichier brut → Modal
+        onAnalyze(data, file);
       }, 400);
 
     } catch (e) {
       clearInterval(iv);
       setRunning(false);
       setProgress(0);
-      setError(e.message || "Erreur lors de l'analyse. Réessaie.");
+      setError(e.message || "Erreur lors de l'analyse. Réessayez.");
     }
   }
 
@@ -69,71 +76,126 @@ export default function StepCV({ onAnalyze, onSkip }) {
 
   return (
     <div>
-      {/* Zone de sélection */}
+      {/* Zone de sélection style ISSAT */}
       <div
-        onClick={() => !hasFile && fileRef.current?.click()}
+        onClick={() => !hasFile && !running && fileRef.current?.click()}
         style={{
-          border: `1.5px ${hasFile ? 'solid #e8d88a' : 'dashed #d1d5db'}`,
-          borderRadius: 16, padding: '1.8rem 1.5rem', textAlign: 'center',
-          background: hasFile ? '#fdfbf0' : '#fafaf8',
-          position: 'relative', overflow: 'hidden',
-          cursor: hasFile ? 'default' : 'pointer', transition: 'all .2s',
+          border: `2px ${hasFile ? 'solid ' + COLORS.blueMain : 'dashed ' + COLORS.border}`,
+          borderRadius: 4, 
+          padding: '2rem 1.5rem', 
+          textAlign: 'center',
+          background: hasFile ? '#F0F7FF' : COLORS.bgLight,
+          position: 'relative', 
+          overflow: 'hidden',
+          cursor: hasFile || running ? 'default' : 'pointer', 
+          transition: 'all .2s',
         }}
       >
         {hasFile ? (
           <>
-            <div style={{ width: 56, height: 56, borderRadius: 14, margin: '0 auto 12px', background: '#fff', border: '1px solid #e8d88a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📄</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0a0a12', marginBottom: 4 }}>{file.name}</div>
-            <div style={{ fontSize: 12, color: '#6b7280' }}>{(file.size / 1024 / 1024).toFixed(1)} MB · PDF</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#fff', border: '1px solid #e8d88a', borderRadius: 8, padding: '7px 13px', marginTop: 12, fontSize: 12 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', flexShrink: 0 }} />
-              <span style={{ fontWeight: 600, color: '#b8960c' }}>Prêt pour l'analyse</span>
+            <div style={{ 
+              width: 50, height: 50, borderRadius: 4, margin: '0 auto 12px', 
+              background: '#fff', border: `1px solid ${COLORS.blueMain}`, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 
+            }}>📄</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.blueDark, marginBottom: 4 }}>{file.name}</div>
+            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{(file.size / 1024 / 1024).toFixed(1)} MB · DOCUMENT PDF</div>
+            
+            <div style={{ 
+              display: 'inline-flex', alignItems: 'center', gap: 7, 
+              background: COLORS.blueDark, borderRadius: 2, 
+              padding: '6px 12px', marginTop: 15, fontSize: 11, color: '#fff',
+              textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700
+            }}>
+              <span style={{ width: 6, height: 6, background: COLORS.blueLight }}></span>
+              Prêt pour l'analyse
             </div>
           </>
         ) : (
           <>
-            <div style={{ width: 56, height: 56, borderRadius: 14, margin: '0 auto 12px', background: '#fff', border: '1.5px dashed #d1d5db', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📎</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#0a0a12', marginBottom: 4 }}>Déposez votre CV ici</div>
-            <div style={{ fontSize: 12, color: '#6b7280' }}>PDF · max 10 MB</div>
+            <div style={{ 
+              width: 50, height: 50, borderRadius: 4, margin: '0 auto 12px', 
+              background: '#fff', border: `2px dashed ${COLORS.border}`, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 
+            }}>📎</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.blueDark, marginBottom: 4 }}>IMPORTATION DU CV</div>
+            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>PDF UNIQUEMENT · MAX 10 MB</div>
           </>
         )}
 
-        {/* Overlay d'analyse */}
+        {/* Overlay d'analyse avec le dégradé du logo */}
         {running && (
-          <div style={{ position: 'absolute', inset: 0, borderRadius: 14, background: 'rgba(253,251,240,.93)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#b8960c' }}>✦ Extraction en cours...</div>
-            <div style={{ width: 190, height: 3, background: '#e5e5ec', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#D4AF37,#e8d080)', borderRadius: 2, transition: 'width .15s' }} />
+          <div style={{ 
+            position: 'absolute', inset: 0, background: 'rgba(255,255,255,.95)', 
+            display: 'flex', flexDirection: 'column', alignItems: 'center', 
+            justifyContent: 'center', gap: 12 
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 900, color: COLORS.blueDark, letterSpacing: '1px' }}>
+              EXTRACTION DES DONNÉES...
             </div>
-            <div style={{ fontSize: 10, color: '#6b7280' }}>Nom · Email · Téléphone · Compétences</div>
+            <div style={{ width: 220, height: 6, background: COLORS.border, borderRadius: 0, overflow: 'hidden' }}>
+              <div style={{ 
+                height: '100%', width: `${progress}%`, 
+                background: `linear-gradient(90deg, ${COLORS.blueDark}, ${COLORS.blueMain})`, 
+                transition: 'width .2s' 
+              }} />
+            </div>
+            <div style={{ fontSize: 10, color: COLORS.blueMain, fontWeight: 700, textTransform: 'uppercase' }}>
+              Analyse IA en cours
+            </div>
           </div>
         )}
       </div>
 
-      {/* Lien changer fichier */}
-      <div style={{ textAlign: 'center', marginTop: 8 }}>
-        <span onClick={() => fileRef.current?.click()} style={{ fontSize: 11, color: '#6b7280', textDecoration: 'underline', cursor: 'pointer' }}>
-          {hasFile ? 'Changer de fichier' : 'Parcourir…'}
+      {/* Actions */}
+      <div style={{ textAlign: 'center', marginTop: 10 }}>
+        <span 
+          onClick={() => !running && fileRef.current?.click()} 
+          style={{ fontSize: 11, color: COLORS.blueMain, fontWeight: 700, textDecoration: 'none', cursor: 'pointer', textTransform: 'uppercase' }}
+        >
+          {hasFile ? '✖ Changer de fichier' : '📂 Parcourir mes documents'}
         </span>
         <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileChange} />
       </div>
 
-      {/* Erreur */}
       {error && (
-        <div style={{ marginTop: 10, padding: '9px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 12, color: '#dc2626' }}>
+        <div style={{ 
+          marginTop: 15, padding: '10px 14px', background: '#FEF2F2', 
+          borderLeft: '4px solid #EF4444', borderRadius: 2, fontSize: 12, color: '#B91C1C', fontWeight: 600 
+        }}>
           ⚠ {error}
         </div>
       )}
 
-      <Button style={{ marginTop: '1.5rem' }} onClick={startAnalysis} disabled={running || !hasFile}>
-        {running ? '⏳ Analyse en cours...' : "✦ Analyser avec l'IA →"}
-      </Button>
+      <button 
+        disabled={running || !hasFile}
+        onClick={startAnalysis}
+        style={{ 
+          marginTop: '2rem', width: '100%', height: 52, 
+          background: running || !hasFile ? '#CBD5E1' : `linear-gradient(135deg, ${COLORS.blueDark} 0%, ${COLORS.blueMain} 100%)`,
+          color: '#fff', border: 'none', borderRadius: 4, 
+          fontWeight: 900, cursor: running || !hasFile ? 'not-allowed' : 'pointer',
+          boxShadow: hasFile && !running ? '0 4px 12px rgba(43, 84, 126, 0.25)' : 'none',
+          transition: 'transform 0.2s'
+        }}
+      >
+        {running ? 'TRAITEMENT EN COURS...' : "LANCER L'ANALYSE IA →"}
+      </button>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#6b7280', margin: '12px 0' }}>
-        <div style={{ flex: 1, height: 1, background: '#e5e5ec' }} /> ou <div style={{ flex: 1, height: 1, background: '#e5e5ec' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: '#94A3B8', margin: '15px 0', fontWeight: 800 }}>
+        <div style={{ flex: 1, height: 1, background: COLORS.border }} /> OU <div style={{ flex: 1, height: 1, background: COLORS.border }} />
       </div>
 
-      <Button variant="ghost" onClick={onSkip}>Remplir manuellement sans CV</Button>
+      <button 
+        onClick={onSkip}
+        style={{ 
+          width: '100%', background: 'none', border: `2px solid ${COLORS.border}`, 
+          color: '#64748B', padding: '12px', borderRadius: 4, fontWeight: 800, 
+          fontSize: 12, cursor: 'pointer', transition: 'all 0.2s'
+        }}
+      >
+        REMPLIR MANUELLEMENT
+      </button>
     </div>
   );
 }

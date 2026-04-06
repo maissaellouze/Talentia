@@ -1,28 +1,45 @@
 import React from 'react';
+// Note : Assurez-vous que FEATURES et TESTIMONIALS dans cvData utilisent 
+// aussi les nouvelles couleurs de l'ISSAT.
 import { FEATURES, TESTIMONIALS } from '../../data/cvData';
 
-/* ─── HOW IT WORKS ─── */
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre Footer/Hero
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
+/* ─── HOW IT WORKS (Comment ça marche) ─── */
 export function HowItWorks() {
   const steps = [
-    { n: '01', t: 'Déposez votre CV',    d: "L'IA extrait immédiatement toutes vos informations personnelles" },
-    { n: '02', t: 'Compte pré-rempli',   d: 'Prénom, nom, email, téléphone et date de naissance extraits automatiquement' },
-    { n: '03', t: 'Profil complet',      d: 'Compétences, formation et expériences structurées en un clic' },
-    { n: '04', t: 'Recevez vos offres',  d: 'Recommandations personnalisées avec score IA de compatibilité' },
+    { n: '01', t: 'Déposez votre CV',    d: "L'IA de l'ISSAT extrait immédiatement toutes vos informations" },
+    { n: '02', t: 'Compte pré-rempli',   d: 'Vos coordonnées sont automatiquement remplies grâce à l\'analyse' },
+    { n: '03', t: 'Profil complet',      d: 'Compétences et expériences structurées en un clic' },
+    { n: '04', t: 'Recevez vos offres',  d: 'Accédez aux stages exclusifs pour les étudiants de l\'ISSAT' },
   ];
   return (
-    <section style={{ padding: '6rem 2rem', background: '#1e1e2e' }}>
+    <section style={{ padding: '6rem 2rem', background: COLORS.bgDark }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#14b8a6', marginBottom: 12 }}>Comment ça marche</div>
-        <div style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: '#fff', letterSpacing: '-.02em', marginBottom: '4rem' }}>
-          De votre CV à l'offre idéale en 4 étapes
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: COLORS.blueMain, marginBottom: 12 }}>Processus</div>
+        <div style={{ fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: '4rem', fontFamily: 'sans-serif' }}>
+          De votre CV au stage idéal en 4 étapes
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
           {steps.map((s, i) => (
             <div key={s.n} style={{ position: 'relative' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(13,184,166,.12)', border: '1px solid rgba(13,184,166,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Clash Display', sans-serif", fontSize: 20, fontWeight: 700, color: '#14b8a6', marginBottom: '1.2rem' }}>{s.n}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{s.t}</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.4)', lineHeight: 1.7 }}>{s.d}</div>
-              {i < 3 && <div style={{ position: 'absolute', right: '-1rem', top: 12, color: 'rgba(255,255,255,.15)', fontSize: 22 }}>→</div>}
+              <div style={{ 
+                width: 50, height: 50, borderRadius: 12, 
+                background: 'rgba(99, 145, 185, 0.15)', 
+                border: `1px solid ${COLORS.blueMain}`, 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                fontSize: 20, fontWeight: 800, color: COLORS.blueMain, marginBottom: '1.5rem' 
+              }}>
+                {s.n}
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10 }}>{s.t}</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>{s.d}</div>
             </div>
           ))}
         </div>
@@ -31,21 +48,28 @@ export function HowItWorks() {
   );
 }
 
-/* ─── FEATURES ─── */
+/* ─── FEATURES (Fonctionnalités) ─── */
 export function Features() {
   return (
     <section style={{ padding: '6rem 2rem', background: '#fff' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#0d9488', marginBottom: 12 }}>Fonctionnalités</div>
-        <div style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: '#0a0a12', letterSpacing: '-.02em', marginBottom: '3.5rem' }}>
-          Tout ce dont vous avez besoin
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: COLORS.blueDark, marginBottom: 12 }}>Avantages</div>
+        <div style={{ fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, color: '#1a1a1a', letterSpacing: '-.02em', marginBottom: '3.5rem', fontFamily: 'sans-serif' }}>
+          La plateforme carrière de l'ISSAT Sousse
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           {FEATURES.map(f => (
-            <div key={f.title} style={{ background: '#fff', border: '1px solid #e5e5ec', borderRadius: 16, padding: '1.8rem', transition: 'all .25s', cursor: 'default' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: f.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: '1.2rem' }}>{f.ico}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#0a0a12', marginBottom: 8 }}>{f.title}</div>
-              <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{f.desc}</div>
+            <div key={f.title} style={{ 
+              background: '#fff', border: '1px solid #eee', borderRadius: 16, 
+              padding: '2rem', transition: 'transform .2s', cursor: 'default',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ 
+                width: 50, height: 50, borderRadius: 12, background: 'rgba(99, 145, 185, 0.1)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: '1.2rem' 
+              }}>{f.ico}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>{f.title}</div>
+              <div style={{ fontSize: 14, color: COLORS.grayText, lineHeight: 1.6 }}>{f.desc}</div>
             </div>
           ))}
         </div>
@@ -54,24 +78,28 @@ export function Features() {
   );
 }
 
-/* ─── TESTIMONIALS ─── */
+/* ─── TESTIMONIALS (Témoignages) ─── */
 export function Testimonials() {
   return (
-    <section style={{ padding: '6rem 2rem', background: '#fafaf8' }}>
+    <section style={{ padding: '6rem 2rem', background: '#f8fafc' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#0d9488', marginBottom: 12 }}>Témoignages</div>
-        <div style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: '#0a0a12', letterSpacing: '-.02em', marginBottom: '3.5rem' }}>
-          Ils ont trouvé leur opportunité
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: COLORS.blueMain, marginBottom: 12 }}>Réussite</div>
+        <div style={{ fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, color: '#1a1a1a', letterSpacing: '-.02em', marginBottom: '3.5rem', fontFamily: 'sans-serif' }}>
+          Ils ont trouvé leur stage via ISSAT Talent
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
           {TESTIMONIALS.map(t => (
-            <div key={t.name} style={{ background: '#fff', border: '1px solid #e5e5ec', borderRadius: 16, padding: '1.5rem' }}>
-              <div style={{ fontSize: 14, color: '#0a0a12', lineHeight: 1.7, marginBottom: '1.2rem', fontStyle: 'italic' }}>{t.q}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{t.av}</div>
+            <div key={t.name} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: '1.8rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize: 14, color: '#334155', lineHeight: 1.7, marginBottom: '1.5rem', fontStyle: 'italic' }}>"{t.q}"</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ 
+                  width: 40, height: 40, borderRadius: '50%', background: COLORS.blueMain, 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  fontSize: 14, fontWeight: 700, color: '#fff' 
+                }}>{t.av}</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0a0a12' }}>{t.name}</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>{t.role}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{t.name}</div>
+                  <div style={{ fontSize: 12, color: COLORS.grayText }}>{t.role}</div>
                 </div>
               </div>
             </div>
@@ -82,22 +110,33 @@ export function Testimonials() {
   );
 }
 
-/* ─── CTA ─── */
+/* ─── CTA (Call to Action) ─── */
 export function CTA({ onSignup, onCompany }) {
   return (
-    <section style={{ background: '#0a0a12', padding: '6rem 2rem', textAlign: 'center' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <div style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 'clamp(32px,5vw,52px)', fontWeight: 700, color: '#fff', letterSpacing: '-.02em', marginBottom: '1rem' }}>
-          Prêt à booster votre <span style={{ color: '#14b8a6' }}>carrière</span> ?
+    <section style={{ background: '#0f172a', padding: '6rem 2rem', textAlign: 'center' }}>
+      <div style={{ maxWidth: 650, margin: '0 auto' }}>
+        <div style={{ 
+          fontSize: 'clamp(30px,5vw,48px)', fontWeight: 800, color: '#fff', 
+          letterSpacing: '-.02em', marginBottom: '1.2rem', fontFamily: 'sans-serif' 
+        }}>
+          Prêt à lancer votre <span style={{ color: COLORS.blueMain }}>carrière</span> ?
         </div>
-        <div style={{ fontSize: 16, color: 'rgba(255,255,255,.45)', marginBottom: '2.5rem' }}>
-          Rejoignez 12 000+ étudiants qui utilisent TalentIA.
+        <div style={{ fontSize: 17, color: 'rgba(255,255,255,.5)', marginBottom: '3rem', lineHeight: 1.6 }}>
+          Rejoignez la communauté des étudiants de l'ISSAT Sousse et accédez aux meilleures opportunités.
         </div>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={onSignup} style={{ height: 56, padding: '0 40px', borderRadius: 12, background: '#0d9488', border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(13,148,136,.3)' }}>
-            Créer mon profil gratuitement →
+        <div style={{ display: 'flex', gap: 15, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={onSignup} style={{ 
+            height: 60, padding: '0 45px', borderRadius: 8, background: COLORS.blueMain, 
+            border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', 
+            transition: 'all .2s', boxShadow: `0 10px 25px rgba(99, 145, 185, 0.3)` 
+          }}>
+            Créer mon profil ISSAT →
           </button>
-          <button onClick={onCompany} style={{ height: 56, padding: '0 32px', borderRadius: 12, background: 'transparent', border: '1.5px solid #14b8a6', color: '#14b8a6', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={onCompany} style={{ 
+            height: 60, padding: '0 35px', borderRadius: 8, background: 'transparent', 
+            border: `2px solid ${COLORS.blueMain}`, color: COLORS.blueMain, 
+            fontSize: 16, fontWeight: 700, cursor: 'pointer', transition: 'all .2s' 
+          }}>
             Espace Recruteur
           </button>
         </div>

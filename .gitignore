@@ -18,3 +18,9 @@ Backend/venv/
 .DS_Store
 
 node_modules/
+Backend/model_cache/
+**/*.incomplete
+**/__pycache__/
+.env
+talentiaFront/node_modules/
+Backend/models_fix/
