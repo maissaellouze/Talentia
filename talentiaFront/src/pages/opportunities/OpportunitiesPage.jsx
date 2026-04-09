@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import StudentSidebar from '../../components/layout/StudentSidebar';
+import MainLayout from '../../components/layout/MainLayout';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -190,23 +190,32 @@ function OpportunityCard({ item, index, onView }) {
 
 const OpportunitiesPage = () => {
   const navigate = useNavigate();
+  const studentId = parseInt(localStorage.getItem('studentId')) || 1;
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
   const [sortBy, setSortBy] = useState('match');
+  const [activeTab, setActiveTab] = useState('opportunities'); // 'opportunities' | 'candidatures'
+  const [myApplications, setMyApplications] = useState([]);
+  const [appsLoading, setAppsLoading] = useState(false);
 
-  // ── Original fetch logic (untouched) ──────────────────────────────────────
+  // ── Original fetch logic ─────────────────────────────────────────────────
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/opportunities/?student_id=1')
+    fetch(`http://127.0.0.1:8000/opportunities/?student_id=${studentId}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
         console.log("SUCCESS DATA:", data);
-        setOpportunities(Array.isArray(data) ? data : []);
+        const normalizedData = Array.isArray(data) ? data.map(d => ({
+            ...d,
+            internship: d.opportunity || d.internship,
+            score: d.match_score !== undefined ? d.match_score : (d.score || 0)
+        })) : [];
+        setOpportunities(normalizedData);
         setLoading(false);
       })
       .catch((err) => {
@@ -215,6 +224,16 @@ const OpportunitiesPage = () => {
         setLoading(false);
       });
   }, []);
+
+  // ── My Applications fetch ────────────────────────────────────────────────
+  useEffect(() => {
+    if (activeTab !== 'candidatures') return;
+    setAppsLoading(true);
+    fetch(`http://127.0.0.1:8000/student/my-applications?student_id=${studentId}`)
+      .then(r => r.json())
+      .then(data => { setMyApplications(Array.isArray(data) ? data : []); setAppsLoading(false); })
+      .catch(() => setAppsLoading(false));
+  }, [activeTab]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
   const sectors = [...new Set(
@@ -271,11 +290,8 @@ const OpportunitiesPage = () => {
         }
       `}</style>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f7f8fa' }}>
-        <StudentSidebar />
-
-        <main style={{ flex: 1, overflowY: 'auto' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px 64px' }}>
+      <MainLayout>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px 64px' }}>
 
             {/* ── Hero Banner ─────────────────────────────────────── */}
             <div style={{
@@ -356,6 +372,27 @@ const OpportunitiesPage = () => {
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* ── Tab Toggle ─────────────────────────────────────── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24, animation: 'opp-fadeUp 0.5s 0.12s ease both' }}>
+              {[
+                { id: 'opportunities', label: '💼 Offres recommandées' },
+                { id: 'candidatures', label: '📋 Mes Candidatures' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                    fontWeight: 700, fontSize: 14, transition: 'all 0.2s',
+                    background: activeTab === tab.id ? '#0d9488' : '#fff',
+                    color: activeTab === tab.id ? '#fff' : '#6b7280',
+                    boxShadow: activeTab === tab.id ? '0 4px 14px rgba(13,148,136,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
+                    border: activeTab === tab.id ? 'none' : '1.5px solid #e5e5ec',
+                  }}
+                >{tab.label}</button>
               ))}
             </div>
 
@@ -459,71 +496,86 @@ const OpportunitiesPage = () => {
               </div>
             </div>
 
-            {/* ── Results count ──────────────────────────────────── */}
-            {!loading && !error && (
-              <p style={{
-                margin: '0 0 20px', fontSize: 14, color: '#6b7280', fontWeight: 500,
-                animation: 'opp-fadeUp 0.5s 0.2s ease both'
-              }}>
-                <strong style={{ color: '#0a0a12' }}>{filtered.length}</strong>{' '}
-                offre{filtered.length !== 1 ? 's' : ''} trouvée{filtered.length !== 1 ? 's' : ''}
-              </p>
+            {activeTab === 'opportunities' && (
+              <>
+                {/* ── Results count ──────────────────────────────────── */}
+                {!loading && !error && (
+                  <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280', fontWeight: 500, animation: 'opp-fadeUp 0.5s 0.2s ease both' }}>
+                    <strong style={{ color: '#0a0a12' }}>{filtered.length}</strong>{' '}
+                    offre{filtered.length !== 1 ? 's' : ''} trouvée{filtered.length !== 1 ? 's' : ''}
+                  </p>
+                )}
+
+                {error && (
+                  <div style={{ padding: '20px 24px', background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', borderRadius: 14, marginBottom: 24, fontSize: 14 }}>
+                    ⚠️ Erreur lors du chargement : {error}
+                  </div>
+                )}
+
+                {/* ── Cards Grid ─────────────────────────────────────── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+                  {loading ? (
+                    Array(6).fill(null).map((_, i) => <SkeletonCard key={i} />)
+                  ) : !error && filtered.length === 0 ? (
+                    <div style={{ gridColumn: '1 / -1', padding: '60px 40px', textAlign: 'center', background: '#fff', borderRadius: 16, border: '1px solid #e5e5ec' }}>
+                      <div style={{ width: 72, height: 72, borderRadius: 20, background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 32 }}>🎯</div>
+                      <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px', color: '#0a0a12' }}>Aucune opportunité trouvée</h3>
+                      <p style={{ color: '#6b7280', margin: 0, fontSize: 14 }}>
+                        {searchTerm || selectedSector ? "Essayez d'ajuster vos filtres de recherche." : "Aucune recommandation disponible pour votre profil pour le moment."}
+                      </p>
+                    </div>
+                  ) : (
+                    filtered.map((item, index) => (
+                      <OpportunityCard key={item?.internship?.id || index} item={item} index={index} onView={(id) => navigate(`/opportunities/${id}`)} />
+                    ))
+                  )}
+                </div>
+              </>
             )}
 
-            {/* ── Error state ────────────────────────────────────── */}
-            {error && (
-              <div style={{
-                padding: '20px 24px', background: '#fef2f2', border: '1px solid #fecaca',
-                color: '#ef4444', borderRadius: 14, marginBottom: 24, fontSize: 14
-              }}>
-                ⚠️ Erreur lors du chargement : {error}
+            {activeTab === 'candidatures' && (
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 20, color: '#0a0a12' }}>Mes Candidatures</h2>
+                {appsLoading ? (
+                  <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px 0' }}>Chargement...</div>
+                ) : myApplications.length === 0 ? (
+                  <div style={{ textAlign: 'center', background: '#fff', borderRadius: 16, border: '1.5px dashed #e5e5ec', padding: '60px 40px' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                    <h3 style={{ fontWeight: 700, margin: '0 0 8px' }}>Aucune candidature</h3>
+                    <p style={{ color: '#9ca3af', margin: 0 }}>Postulhez à des offres pour les voir apparaître ici.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {myApplications.map(app => {
+                      const STATUS = {
+                        pending:  { label: 'En attente',  bg: '#fffbeb', color: '#ca8a04', border: '#fde68a' },
+                        accepted: { label: 'Acceptée',    bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+                        rejected: { label: 'Refusée',     bg: '#fef2f2', color: '#ef4444', border: '#fecaca' },
+                      };
+                      const s = STATUS[app.status] || STATUS.pending;
+                      return (
+                        <div key={app.id} style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #e5e5ec', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>💼</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 15, color: '#0a0a12', marginBottom: 2 }}>{app.opportunity_title}</div>
+                            <div style={{ fontSize: 13, color: '#6b7280' }}>{app.company_name} · {app.submitted_at}</div>
+                          </div>
+                          <span style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color, border: `1.5px solid ${s.border}` }}>
+                            {s.label}
+                          </span>
+                          <button onClick={() => navigate(`/opportunities/${app.opportunity_id}`)} style={{ padding: '8px 16px', borderRadius: 10, border: '1.5px solid #e5e5ec', background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                            Voir l'offre →
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ── Cards Grid ─────────────────────────────────────── */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: 20
-            }}>
-              {loading ? (
-                Array(6).fill(null).map((_, i) => <SkeletonCard key={i} />)
-              ) : !error && filtered.length === 0 ? (
-                <div style={{
-                  gridColumn: '1 / -1', padding: '60px 40px', textAlign: 'center',
-                  background: '#fff', borderRadius: 16, border: '1px solid #e5e5ec'
-                }}>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: 20, background: '#f0fdfa',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 20px', fontSize: 32
-                  }}>
-                    🎯
-                  </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px', color: '#0a0a12' }}>
-                    Aucune opportunité trouvée
-                  </h3>
-                  <p style={{ color: '#6b7280', margin: 0, fontSize: 14 }}>
-                    {searchTerm || selectedSector
-                      ? "Essayez d'ajuster vos filtres de recherche."
-                      : "Aucune recommandation disponible pour votre profil pour le moment."}
-                  </p>
-                </div>
-              ) : (
-                filtered.map((item, index) => (
-                  <OpportunityCard
-                    key={item?.internship?.id || index}
-                    item={item}
-                    index={index}
-                    onView={(id) => navigate(`/opportunities/${id}`)}
-                  />
-                ))
-              )}
-            </div>
-
           </div>
-        </main>
-      </div>
+      </MainLayout>
     </>
   );
 };

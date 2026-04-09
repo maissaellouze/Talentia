@@ -21,7 +21,7 @@ const MOCK_APPLICATIONS = [
 
 // ─── Application Card ─────────────────────────────────────────────────────────
 
-function ApplicationCard({ app, onStatusChange }) {
+function ApplicationCard({ app, onStatusChange, onViewProfile }) {
   const [hovered, setHovered] = useState(false);
   const statusInfo = STATUS_MAP[app.status] || STATUS_MAP.pending;
   const avatarColors = ['#0d9488', '#6366f1', '#f97316', '#ec4899', '#14b8a6', '#8b5cf6'];
@@ -95,8 +95,22 @@ function ApplicationCard({ app, onStatusChange }) {
       </span>
 
       {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button
+          onClick={() => onViewProfile(app.student_id)}
+          style={{
+            padding: '7px 14px', borderRadius: 10, border: '1.5px solid #0d9488',
+            background: '#fff', color: '#0d9488', fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', transition: 'all 0.18s'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#f0fdfa'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+        >
+          👤 Voir Profil
+        </button>
+
       {app.status === 'pending' && (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <>
           <button
             onClick={() => onStatusChange(app.id, 'accepted')}
             style={{
@@ -121,7 +135,7 @@ function ApplicationCard({ app, onStatusChange }) {
           >
             ✕ Refuser
           </button>
-        </div>
+        </>
       )}
 
       {app.status !== 'pending' && (
@@ -136,6 +150,7 @@ function ApplicationCard({ app, onStatusChange }) {
           Réinitialiser
         </button>
       )}
+      </div>
     </div>
   );
 }
@@ -150,27 +165,39 @@ export default function CompanyApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const companyId = localStorage.getItem('companyId');
+
+  const handleViewProfile = async (studentId) => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/student/me?student_id=${studentId}`);
+      if (res.ok) setSelectedStudent(await res.json());
+    } catch {}
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
       try {
         // Fetch opportunity details
-        const oppRes = await fetch(`http://127.0.0.1:8000/company/opportunities/${id}?company_id=${companyId}`);
+        const oppRes = await fetch(`http://127.0.0.1:8000/opportunities/${id}`);
         if (oppRes.ok) setOpportunity(await oppRes.json());
 
-        // Fetch applications
-        const appRes = await fetch(`http://127.0.0.1:8000/company/opportunities/${id}/applications?company_id=${companyId}`);
+        // Fetch applications — companyId may be null for demo, use fallback 1
+        const cId = companyId || 1;
+        const appRes = await fetch(`http://127.0.0.1:8000/company/opportunities/${id}/applications?company_id=${cId}`);
         if (appRes.ok) {
           const data = await appRes.json();
+          // If backend returned real data (even empty array), use it; only fallback if error
           setApplications(Array.isArray(data) ? data : []);
         } else {
-          setApplications(MOCK_APPLICATIONS);
+          console.warn('Applications fetch failed, status:', appRes.status);
+          setApplications([]); // Show empty - don't mislead with mock
         }
-      } catch {
-        setApplications(MOCK_APPLICATIONS);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setApplications([]);
       } finally {
         setLoading(false);
       }
@@ -334,13 +361,67 @@ export default function CompanyApplicationsPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, animation: 'opp-fadeUp 0.4s 0.2s ease both' }}>
                 {filtered.map((app, i) => (
-                  <ApplicationCard key={app.id} app={app} onStatusChange={handleStatusChange} />
+                  <ApplicationCard key={app.id} app={app} onStatusChange={handleStatusChange} onViewProfile={handleViewProfile} />
                 ))}
               </div>
             )}
           </div>
         </main>
       </div>
+
+      {/* Student Profile Modal */}
+      {selectedStudent && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setSelectedStudent(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 20, width: '90%', maxWidth: 600,
+            maxHeight: '90vh', overflowY: 'auto', padding: 32, position: 'relative'
+          }} onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedStudent(null)}
+              style={{
+                position: 'absolute', top: 16, right: 16, background: '#f3f4f6', border: 'none',
+                width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontWeight: 'bold'
+              }}
+            >✕</button>
+            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{selectedStudent.first_name} {selectedStudent.last_name}</h2>
+            <div style={{ color: '#6b7280', fontSize: 14, marginBottom: 24 }}>{selectedStudent.field_of_study} · {selectedStudent.university}</div>
+            
+            <div style={{ background: '#f9fafb', padding: 16, borderRadius: 12, marginBottom: 24 }}>
+              <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Email:</strong> {selectedStudent.email}</div>
+              {selectedStudent.phone && <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Téléphone:</strong> {selectedStudent.phone}</div>}
+              {selectedStudent.linkedin && <div style={{ fontSize: 14, marginBottom: 8 }}><strong>LinkedIn:</strong> <a href={selectedStudent.linkedin} target="_blank" rel="noreferrer">{selectedStudent.linkedin}</a></div>}
+              {selectedStudent.github && <div style={{ fontSize: 14 }}><strong>GitHub:</strong> <a href={selectedStudent.github} target="_blank" rel="noreferrer">{selectedStudent.github}</a></div>}
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Biographie</h3>
+            <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, marginBottom: 24 }}>{selectedStudent.bio || "Aucune biographie fournie."}</p>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Compétences</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {selectedStudent.skills?.map((s, i) => (
+                <span key={i} style={{ background: '#e0e7ff', color: '#4f46e5', padding: '6px 12px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                  {s.name} <span style={{ opacity: 0.7, fontSize: 11 }}>({s.level})</span>
+                </span>
+              ))}
+              {(!selectedStudent.skills || selectedStudent.skills.length === 0) && <span style={{ color: '#9ca3af', fontSize: 14 }}>Non renseigné</span>}
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Langues</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {selectedStudent.languages?.map((s, i) => (
+                <span key={i} style={{ background: '#fce7f3', color: '#db2777', padding: '6px 12px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                  {s.name} <span style={{ opacity: 0.7, fontSize: 11 }}>({s.level})</span>
+                </span>
+              ))}
+              {(!selectedStudent.languages || selectedStudent.languages.length === 0) && <span style={{ color: '#9ca3af', fontSize: 14 }}>Non renseigné</span>}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

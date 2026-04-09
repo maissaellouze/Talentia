@@ -1,4 +1,5 @@
 import hashlib
+from typing import Dict, Any, Optional, List
 import re
 import os
 import json
@@ -9,6 +10,10 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import fitz  # PyMuPDF
+import requests
+import io
+import pandas as pd
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, Response, UploadFile, File, Form, HTTPException, status
 from groq import Groq
 from sqlalchemy.orm import Session, joinedload
@@ -33,7 +38,7 @@ from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
 from app.schemas.company_schema import SocieteCreate as CompanyCreate
-from fastapi import APIRouter
+
 
 router = APIRouter(prefix="/auth", tags=["Registration"])
 
@@ -181,7 +186,7 @@ def ask_ai_to_format(raw_text: str) -> dict:
     """
 
     try:
-        # Appel à l'API Groq
+        # Appel à l'API Groq (plus puissante pour ce format)
         chat_completion = groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_instruction},
@@ -194,18 +199,95 @@ def ask_ai_to_format(raw_text: str) -> dict:
         )
 
         content = chat_completion.choices[0].message.content.strip()
-        data = json.loads(content)
+        
+        # Robust JSON extraction (from stashed logic)
+        try:
+            # Try direct block removal
+            json_str = content.replace("```json", "").replace("```", "").strip()
+            data = json.loads(json_str)
+        except:
+            # Try finding the first { and last }
+            try:
+                start = content.find('{')
+                end = content.rfind('}') + 1
+                if start != -1 and end != 0:
+                    data = json.loads(content[start:end])
+                else:
+                    raise ValueError("No JSON found")
+            except:
+                print(f"DEBUG: Failed to parse AI response: {content}")
+                raise HTTPException(status_code=422, detail="L'IA n'a pas renvoyé un format JSON valide.")
         
         # Nettoyage des expériences avec vos fonctions existantes
         data["experiences"] = clean_experiences(data.get("experiences", []))
         return data
 
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Erreur Groq : {str(e)}")
+        print(f"Erreur Groq/Analyse : {str(e)}")
         raise HTTPException(
             status_code=503, 
-            detail="Le service d'analyse IA (Groq) est indisponible."
+            detail="Le service d'analyse IA est indisponible ou a échoué."
         )
+
+def clean_int(val: Any) -> Optional[int]:
+    if val is None: return None
+    if isinstance(val, int): return val
+    try:
+        # Extract first number from string like "2010" or "7000+"
+        import re
+        match = re.search(r'\d+', str(val))
+        return int(match.group()) if match else None
+    except: return None
+
+def clean_list(val: Any) -> List[str]:
+    if not val: return []
+    if isinstance(val, list): return [str(x) for x in val]
+    if isinstance(val, str):
+        return [x.strip() for x in val.split(",") if x.strip()]
+    return []
+
+def ask_ai_to_format_company(raw_text: str) -> dict:
+    system_instruction = "Tu es un expert en analyse d'entreprises. Réponds UNIQUEMENT avec du JSON valide."
+    prompt = f"""Extrais les données de l'entreprise en JSON. 
+    Format: rne_id, name, legal_name, activity, sector, naf_code, legal_form, address, city, code_postal, creation_year, employee_count, description, website, email, phone, main_domain, secondary_domains (list), technologies (list), social_media (dict).
+    
+    Texte: {raw_text}"""
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}],
+        model=GROQ_MODEL,
+        temperature=0.1,
+        response_format={"type": "json_object"}
+    )
+    content = response.choices[0].message.content.strip()
+    
+    try:
+        json_str = content.replace("```json", "").replace("```", "").strip()
+        return json.loads(json_str)
+    except:
+        try:
+            start = content.find('{')
+            end = content.rfind('}') + 1
+            if start != -1 and end != 0:
+                return json.loads(content[start:end])
+            else:
+                raise ValueError("No JSON found")
+        except:
+            print(f"DEBUG: Failed to parse AI response: {content}")
+            raise HTTPException(status_code=422, detail="L'IA n'a pas renvoyé un format JSON valide pour l'entreprise.")
+
+def extract_text_from_url(url: str) -> str:
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Remove script and style elements
+        for script in soup(["script", "style"]):
+            script.decompose()
+        return soup.get_text(separator=' ', strip=True)[:10000] # Limit text
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erreur lors de l'accès au site: {str(e)}")
 
 # ════════════════════════════════════════════════
 # ROUTES
@@ -294,6 +376,71 @@ async def parse_cv(file: UploadFile = File(...)):
     pdf_bytes = await file.read()
     return ask_ai_to_format(extract_text_from_pdf(pdf_bytes))
 
+@router.post("/register/company/parse-file")
+async def parse_company_file(file: UploadFile = File(...)):
+    print(f"DEBUG: Parsing company file: {file.filename}")
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    if filename.endswith(".pdf"):
+        text = extract_text_from_pdf(content)
+    elif filename.endswith(".csv"):
+        try:
+            # Read only first 50 rows to avoid too much text
+            df = pd.read_csv(io.BytesIO(content), nrows=50)
+            text = df.to_string(index=False)
+            print(f"DEBUG: CSV extracted, length: {len(text)}")
+        except Exception as e:
+            print(f"ERROR reading CSV: {e}")
+            raise HTTPException(status_code=400, detail=f"Erreur lors de la lecture du CSV: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail="Format de fichier non supporté. Utilisez PDF ou CSV.")
+    
+    # Check if text is too long for the model
+    if len(text) > 4000:
+        text = text[:4000] + "... (truncated)"
+
+    try:
+        print("DEBUG: Calling AI for company data extraction...")
+        # If HF_TOKEN is "your token ", this will fail. 
+        # I'll add a check or a fallback for demo purposes if the user hasn't set it.
+        if HF_TOKEN == "your token ":
+            print("WARNING: HF_TOKEN is not set. Using mock response for demonstration.")
+            return {
+                "name": "Entreprise Demo",
+                "email": "contact@demo.com",
+                "activity": "Nouvelles Technologies",
+                "description": "Information extraite via démo (Token non configuré)"
+            }
+            
+        result = ask_ai_to_format_company(text)
+        print("DEBUG: AI result received successfully")
+        return result
+    except Exception as e:
+        print(f"ERROR in AI extraction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur d'extraction IA: {str(e)}")
+
+@router.post("/register/company/parse-url")
+async def parse_company_url(url: str = Form(...)):
+    print(f"DEBUG: Parsing company URL: {url}")
+    try:
+        text = extract_text_from_url(url)
+        print(f"DEBUG: URL scraped, length: {len(text)}")
+        
+        if HF_TOKEN == "your token ":
+            print("WARNING: HF_TOKEN is not set. Using mock response for demonstration.")
+            return {
+                "name": "Entreprise Web Demo",
+                "email": "contact@web.com",
+                "website": url,
+                "description": "Informations extraites du site (Demo mode)"
+            }
+            
+        return ask_ai_to_format_company(text)
+    except Exception as e:
+        print(f"ERROR in URL extraction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/register/company/request")
 def register_company_request(data: CompanyCreate, db: Session = Depends(get_db)):
     print(f"DEBUG: Company registration request for email: {data.email}")
@@ -301,34 +448,42 @@ def register_company_request(data: CompanyCreate, db: Session = Depends(get_db))
     # Check Company table
     existing_company = db.query(Company).filter(Company.email == data.email).first()
     if existing_company:
-        print(f"DEBUG: Email {data.email} already exists in companies table")
-        raise HTTPException(status_code=400, detail="Une demande avec cet email existe déjà dans notre base entreprises.")
+        raise HTTPException(status_code=400, detail="Une demande avec cet email existe déjà.")
     
-    # Check User table
+    # Check User table (for students/admins)
     existing_user = db.query(User).filter(User.email == data.email).first()
     if existing_user:
-        print(f"DEBUG: Email {data.email} already exists in users table")
-        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé par un compte utilisateur (Étudiant ou Admin).")
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé par un autre compte.")
 
     try:
-        company = Company(
-            name=data.name, 
-            email=data.email, 
-            activity=data.industry or data.activity, 
-            city=data.city, 
-            phone=data.phone, 
-            description=data.description, 
-            status="pending",
-            is_verified=False
-        )
+        # Map all fields from SocieteCreate to Company model
+        company_data = data.model_dump(exclude_unset=True)
+        
+        # Clean numeric fields
+        for field in ["code_postal", "creation_year", "employee_count"]:
+            if field in company_data:
+                company_data[field] = clean_int(company_data[field])
+        
+        # Clean list fields
+        for field in ["secondary_domains", "technologies"]:
+            if field in company_data:
+                company_data[field] = clean_list(company_data[field])
+
+        # Handle field alias 'industry' mapping to 'activity' if 'activity' not provided
+        if 'industry' in company_data and 'activity' not in company_data:
+            company_data['activity'] = company_data.pop('industry')
+        
+        company = Company(**company_data)
+        company.status = "pending"
+        company.is_verified = False
+        
         db.add(company)
         db.commit()
-        print(f"DEBUG: Company request created successfully for {data.email}")
         return {"message": "Votre demande a été envoyée avec succès."}
     except Exception as e:
+        print(f"ERROR creating company: {e}")
         db.rollback()
-        print(f"DEBUG: Error creating company request: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la demande: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
 
 @router.post("/send-otp")
 async def send_otp(email: str = Form(...)):

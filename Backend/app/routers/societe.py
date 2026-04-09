@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from datetime import datetime
 from fastapi import UploadFile, File, Form
 from sqlalchemy import Column, Integer, String, Float, Text, Boolean, JSON, func
 from sqlalchemy.orm import Session, relationship
@@ -184,11 +185,17 @@ def add_review(id: int, review_data: dict, db: Session = Depends(get_db)):
 def get_pfe(id: int, db: Session = Depends(get_db)):
     return db.query(PFEReport).filter(PFEReport.company_id == id).all()
 
+from app.utils.pfe_service import extract_text_from_pdf, generate_embedding
+
 @router.post("/societes/{id}/pfe")
 async def upload_pfe(
     id: int,
     title: str = Form(...),
     domain: str = Form(""),
+    author: str = Form(None),
+    university: str = Form(None),
+    year: str = Form(None),
+    description: str = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -196,17 +203,33 @@ async def upload_pfe(
     if not company:
         raise HTTPException(status_code=404, detail="Entreprise non trouvée")
 
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    report = PFEReport(
-        title=title,
-        domain=domain,
-        file_url=f"/uploads/{file.filename}",
-        company_id=id,
-    )
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-    return report
+        # extraction texte
+        text = extract_text_from_pdf(file_path)
+        # embedding
+        embedding = generate_embedding(text)
+
+        report = PFEReport(
+            title=title,
+            domain=domain,
+            author=author if author else company.name,
+            university=university,
+            year=year,
+            description=description,
+            file_url=f"/uploads/{file.filename}",
+            content_text=text,
+            embedding=embedding,
+            company_id=id,
+            created_at=datetime.utcnow()
+        )
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+        return report
+    except Exception as e:
+        print(f"❌ Upload Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

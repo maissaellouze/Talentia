@@ -1,16 +1,16 @@
-import StudentLayout from "../components/layout/StudentLayout";
+import MainLayout from "../components/layout/MainLayout";
 import React, { useState, useEffect } from "react";
 // ─── Mock data (remplace par ton API) ────────────────────────────────────────
 const MOCK_REPORTS = [
-  { id: 1, title: "Système de recommandation d'emploi basé sur le Deep Learning", domain: "IA", author: "Ahmed Ben Ali", year: "2024", university: "ESPRIT", views: 342 },
-  { id: 2, title: "Plateforme e-commerce avec microservices React & Node.js", domain: "Web", author: "Sarra Trabelsi", year: "2024", university: "INSAT", views: 215 },
-  { id: 3, title: "Application mobile de suivi médical avec Flutter", domain: "Mobile", author: "Mohamed Chaabani", year: "2023", university: "FST", views: 189 },
-  { id: 4, title: "Détection d'anomalies réseau par apprentissage automatique", domain: "IA", author: "Ines Hamdi", year: "2023", university: "ESPRIT", views: 410 },
-  { id: 5, title: "Digitalisation des processus RH : ERP sur mesure", domain: "Web", author: "Youssef Khelil", year: "2023", university: "ISET", views: 98 },
-  { id: 6, title: "Chatbot intelligent pour le support client bancaire", domain: "IA", author: "Rania Meddeb", year: "2024", university: "INSAT", views: 276 },
-  { id: 7, title: "Système de gestion de bibliothèque universitaire", domain: "Web", author: "Nour Belhaj", year: "2022", university: "FST", views: 134 },
-  { id: 8, title: "Application IoT pour la gestion d'énergie intelligente", domain: "IoT", author: "Bilel Mansouri", year: "2024", university: "ENIT", views: 305 },
-  { id: 9, title: "Plateforme d'apprentissage en ligne avec IA adaptative", domain: "IA", author: "Malek Zaidi", year: "2023", university: "ESPRIT", views: 488 },
+  { id: 1, title: "Système de recommandation d'emploi basé sur le Deep Learning", domain: "IA", author: "Ahmed Ben Ali", year: "2024", university: "ESPRIT", views: 342, description: "Ce projet explore l'utilisation des réseaux de neurones profonds pour personnaliser les recommandations d'offres d'emploi selon le profil du candidat. Le système atteint un taux de pertinence de 87% sur les données de test." },
+  { id: 2, title: "Plateforme e-commerce avec microservices React & Node.js", domain: "Web", author: "Sarra Trabelsi", year: "2024", university: "INSAT", views: 215, description: "Conception et développement d'une architecture microservices pour une plateforme e-commerce moderne. Chaque service est indépendant, dockerisé et communique via une API Gateway avec gestion de cache Redis." },
+  { id: 3, title: "Application mobile de suivi médical avec Flutter", domain: "Mobile", author: "Mohamed Chaabani", year: "2023", university: "FST", views: 189, description: "Application cross-platform permettant aux patients de suivre leurs indicateurs de santé (tension, glycémie, poids) et d'envoyer des alertes automatiques à leur médecin en cas d'anomalie détectée." },
+  { id: 4, title: "Détection d'anomalies réseau par apprentissage automatique", domain: "IA", author: "Ines Hamdi", year: "2023", university: "ESPRIT", views: 410, description: "Système de cybersécurité basé sur des algorithmes de clustering (K-Means, DBSCAN) et de classification (Random Forest) pour détecter en temps réel les intrusions et anomalies dans le trafic réseau." },
+  { id: 5, title: "Digitalisation des processus RH : ERP sur mesure", domain: "Web", author: "Youssef Khelil", year: "2023", university: "ISET", views: 98, description: "Développement d'un module ERP complet pour la gestion des ressources humaines intégrant : recrutement, paie, congés, évaluations de performances et tableaux de bord analytiques." },
+  { id: 6, title: "Chatbot intelligent pour le support client bancaire", domain: "IA", author: "Rania Meddeb", year: "2024", university: "INSAT", views: 276, description: "Chatbot NLP basé sur BERT fine-tuné sur des données bancaires tunisiennes. Le système gère les demandes de solde, virements, réclamations et escalade automatiquement vers un agent humain si nécessaire." },
+  { id: 7, title: "Système de gestion de bibliothèque universitaire", domain: "Web", author: "Nour Belhaj", year: "2022", university: "FST", views: 134, description: "Refonte complète du système de gestion de bibliothèque avec une interface web moderne, gestion des emprunts/retours, notifications automatiques et recherche full-text dans le catalogue en ligne." },
+  { id: 8, title: "Application IoT pour la gestion d'énergie intelligente", domain: "IoT", author: "Bilel Mansouri", year: "2024", university: "ENIT", views: 305, description: "Réseau de capteurs ESP32 connectés au cloud via MQTT, avec un dashboard temps réel affichant la consommation électrique par pièce et des recommandations d'optimisation générées par IA." },
+  { id: 9, title: "Plateforme d'apprentissage en ligne avec IA adaptative", domain: "IA", author: "Malek Zaidi", year: "2023", university: "ESPRIT", views: 488, description: "LMS intelligent qui adapte le contenu pédagogique et le rythme d'apprentissage à chaque étudiant grâce à un moteur de recommandation basé sur la théorie de la réponse aux items (IRT) et des modèles de connaissance bayésiens." },
 ];
 
 const DOMAIN_COLORS = {
@@ -49,7 +49,7 @@ function StatBadge({ icon, value, label, color }) {
   );
 }
 
-function ReportCardNew({ report, delay = 0 }) {
+function ReportCardNew({ report, delay = 0, onView }) {
   const colors = DOMAIN_COLORS[report.domain] || { bg: "#f1f5f9", text: "#475569", dot: "#64748b" };
   const [hovered, setHovered] = useState(false);
 
@@ -57,6 +57,7 @@ function ReportCardNew({ report, delay = 0 }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => onView && onView(report)}
       style={{
         background: "#fff",
         borderRadius: 20,
@@ -119,14 +120,17 @@ function ReportCardNew({ report, delay = 0 }) {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        <button style={{
-          background: hovered ? "#0d9488" : "transparent",
-          color: hovered ? "#fff" : "#0d9488",
-          border: "1.5px solid #0d9488",
-          borderRadius: 10, padding: "8px 16px",
-          fontSize: 13, fontWeight: 600, cursor: "pointer",
-          transition: "all 0.2s",
-        }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onView && onView(report); }}
+          style={{
+            background: hovered ? "#0d9488" : "transparent",
+            color: hovered ? "#fff" : "#0d9488",
+            border: "1.5px solid #0d9488",
+            borderRadius: 10, padding: "8px 16px",
+            fontSize: 13, fontWeight: 600, cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
           Voir le rapport →
         </button>
         <button style={{
@@ -236,6 +240,8 @@ const Reports = () => {
   const [sort, setSort] = useState("views");
   const [year, setYear] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
 
 useEffect(() => {
   fetch("http://localhost:8000/reports/")
@@ -289,7 +295,7 @@ useEffect(() => {
   });
 
   return (
-    <StudentLayout>
+    <MainLayout>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
         {/* ── Header ── */}
@@ -389,46 +395,180 @@ useEffect(() => {
           )}
         </div>
 
+        {/* ── Grid Header ── */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {["total", "IA", "Web", "Mobile", "IoT"].map(d => (
+              <button
+                key={d}
+                onClick={() => setDomain(d === "total" ? "" : d)}
+                style={{
+                  padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+                  cursor: "pointer", border: "none", transition: "all 0.2s",
+                  background: (domain === d || (d === "total" && domain === "")) ? "#0d9488" : "#f1f5f9",
+                  color: (domain === d || (d === "total" && domain === "")) ? "#fff" : "#64748b",
+                }}
+              >
+                {d === "total" ? "Tout" : d} ({counts[d]})
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={() => setShowUpload(true)}
+            style={{ 
+              background: "#0d9488", color: "#fff", border: "none", padding: "10px 20px", 
+              borderRadius: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(13,148,136,0.2)" 
+            }}
+          >
+            + Soumettre mon Rapport
+          </button>
+        </div>
+
         {/* ── Grid ── */}
         {loading ? (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 20,
-          }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
             {[1,2,3,4,5,6].map(i => (
-              <div key={i} style={{
-                background: "#f8fafc",
-                borderRadius: 20, height: 200,
-                animation: "pulse 1.5s ease-in-out infinite",
-              }} />
+              <div key={i} style={{ background: "#f8fafc", borderRadius: 20, height: 200, animation: "pulse 1.5s ease-in-out infinite" }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{
-            textAlign: "center", padding: "80px 20px",
-            background: "#fff", borderRadius: 20,
-            border: "1px solid #f1f5f9",
-          }}>
+          <div style={{ textAlign: "center", padding: "80px 20px", background: "#fff", borderRadius: 20, border: "1px solid #f1f5f9" }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
             <h3 style={{ color: "#0f172a", fontWeight: 700, margin: "0 0 8px" }}>Aucun rapport trouvé</h3>
-            <p style={{ color: "#94a3b8", margin: 0 }}>
-              Essayez d'autres mots-clés ou modifiez vos filtres.
-            </p>
+            <p style={{ color: "#94a3b8", margin: 0 }}>Essayez d'autres mots-clés ou modifiez vos filtres.</p>
           </div>
         ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 20,
-          }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
             {filtered.map((report, i) => (
-              <ReportCardNew key={report.id} report={report} delay={i * 60} />
+              <ReportCardNew 
+                key={report.id} 
+                report={report} 
+                delay={i * 60} 
+                onView={async (r) => {
+                  setSelectedReport(r);
+                  // Increment view on backend
+                  try { await fetch(`http://localhost:8000/reports/${r.id}/view`, { method: "PATCH" }); } catch {}
+                }} 
+              />
             ))}
           </div>
         )}
 
       </div>
+
+      {/* ── Submition Modal ── */}
+      {showUpload && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 500, padding: 32, position: "relative" }}>
+            <button onClick={() => setShowUpload(false)} style={{ position: "absolute", top: 20, right: 20, background: "none", border: "none", fontSize: 24, cursor: "pointer" }}>×</button>
+            <h2 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800 }}>Soumettre un Rapport</h2>
+            <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Partagez votre travail avec la communauté TalentIA.</p>
+            
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              try {
+                const res = await fetch("http://localhost:8000/reports/upload", { method: "POST", body: fd });
+                if (res.ok) { setShowUpload(false); window.location.reload(); }
+              } catch (err) { alert("Erreur lors de l'envoi"); }
+            }}>
+              <div style={{ display: "grid", gap: 16 }}>
+                <input name="title" placeholder="Titre du projet" required style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <select name="domain" required style={{ padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14 }}>
+                    <option value="IA">🤖 IA</option>
+                    <option value="Web">🌐 Web</option>
+                    <option value="Mobile">📱 Mobile</option>
+                    <option value="IoT">🔌 IoT</option>
+                  </select>
+                  <input name="year" placeholder="Année (ex: 2024)" required style={{ padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14 }} />
+                </div>
+                <input name="author" placeholder="Votre Nom Complet" required style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14 }} />
+                <input name="university" placeholder="Université / École" required style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14 }} />
+                <textarea name="description" placeholder="Court résumé de votre PFE..." style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, minHeight: 80 }} />
+                <div style={{ border: "2px dashed #cbd5e1", borderRadius: 12, padding: 20, textAlign: "center" }}>
+                   <input type="file" name="file" accept=".pdf" required style={{ fontSize: 13 }} />
+                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>Format PDF uniquement</div>
+                </div>
+                <button type="submit" style={{ background: "#0d9488", color: "#fff", border: "none", padding: "14px", borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Publier le Rapport</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {selectedReport && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setSelectedReport(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 24, width: '90%', maxWidth: 640,
+            maxHeight: '90vh', overflowY: 'auto', padding: '36px 40px', position: 'relative'
+          }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedReport(null)} style={{
+              position: 'absolute', top: 16, right: 16, background: '#f3f4f6', border: 'none',
+              width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontWeight: 'bold', fontSize: 16
+            }}>✕</button>
+
+            {/* Domain badge */}
+            {(() => {
+              const dColors = DOMAIN_COLORS[selectedReport.domain] || { bg: '#f1f5f9', text: '#475569', dot: '#64748b' };
+              return (
+                <span style={{ background: dColors.bg, color: dColors.text, fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 16 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: dColors.dot, display: 'inline-block' }} />
+                  {selectedReport.domain}
+                </span>
+              );
+            })()}
+
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 16, lineHeight: 1.4 }}>
+              {selectedReport.title}
+            </h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>AUTEUR</div>
+                <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedReport.author || 'Anonyme'}</div>
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>UNIVERSITÉ</div>
+                <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedReport.university || 'Non précisé'}</div>
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>ANNÉE</div>
+                <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedReport.year || 'N/A'}</div>
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>VUES</div>
+                <div style={{ fontWeight: 700, color: '#0f172a' }}>👁 {selectedReport.views || 0}</div>
+              </div>
+            </div>
+
+            {selectedReport.description && (
+              <>
+                <h3 style={{ fontWeight: 700, marginBottom: 10, color: '#0f172a' }}>Résumé</h3>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: '#374151', marginBottom: 24 }}>{selectedReport.description}</p>
+              </>
+            )}
+
+            {selectedReport.url ? (
+              <a href={selectedReport.url} target="_blank" rel="noreferrer" style={{
+                display: 'block', textAlign: 'center', background: '#0d9488', color: '#fff',
+                padding: '12px', borderRadius: 12, fontWeight: 700, textDecoration: 'none',
+              }}>
+                Télécharger / Voir le PDF →
+              </a>
+            ) : (
+              <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, padding: '12px', background: '#f9fafb', borderRadius: 12 }}>
+                📄 Document disponible en consultation seule
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse {
@@ -436,7 +576,7 @@ useEffect(() => {
           50% { opacity: 0.5; }
         }
       `}</style>
-    </StudentLayout>
+    </MainLayout>
   );
 };
 

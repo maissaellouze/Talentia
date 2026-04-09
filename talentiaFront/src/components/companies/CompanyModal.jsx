@@ -18,7 +18,7 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
   });
 
   const [newPfe, setNewPfe] = useState({
-    title: '', domain: '', file: null
+    title: '', domain: '', author: '', university: '', year: '', description: '', file: null
   });
 
   const [hoverRating, setHoverRating] = useState(0);
@@ -80,12 +80,16 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
       form.append('file', newPfe.file);
       form.append('title', newPfe.title);
       form.append('domain', newPfe.domain);
+      form.append('author', newPfe.author);
+      form.append('university', newPfe.university);
+      form.append('year', newPfe.year);
+      form.append('description', newPfe.description);
       const r = await fetch(`${API_BASE_URL}/societes/${company.id}/pfe`, {
         method: 'POST', body: form
       });
       if (r.ok) {
         setPfeReports([await r.json(), ...pfeReports]);
-        setNewPfe({ title: '', domain: '', file: null });
+        setNewPfe({ title: '', domain: '', author: '', university: '', year: '', description: '', file: null });
         if (fileRef.current) fileRef.current.value = '';
       } else {
         alert("Erreur lors du dépôt du PFE.");
@@ -105,89 +109,161 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
         .modal-inp {
-          width: 100%; padding: 11px 14px; border-radius: 10px;
-          border: 1.5px solid #bfdbfe; font-family: 'DM Sans', sans-serif;
-          font-size: 14px; outline: none; transition: border .15s;
-          background: #fff; color: #0a1628; box-sizing: border-box;
+          width: 100%; padding: 12px 16px; border-radius: 12px;
+          border: 1.5px solid #e5e7eb; font-family: system-ui, -apple-system, sans-serif;
+          font-size: 14px; outline: none; transition: border 0.2s, box-shadow 0.2s;
+          background: #f9fafb; color: #111827; box-sizing: border-box;
         }
-        .modal-inp:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+        .modal-inp:focus { 
+          border-color: #6391B9; 
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(99,145,185,0.1); 
+        }
         .submit-btn {
-          padding: 12px 24px; background: #1a56db; color: #fff;
-          border: none; border-radius: 10px; font-weight: 700;
-          font-family: 'DM Sans', sans-serif; font-size: 14px;
-          cursor: pointer; transition: background .15s; align-self: flex-start;
+          padding: 14px 28px; background: linear-gradient(135deg, #6391B9, #2B547E); 
+          color: #fff; border: none; border-radius: 12px; font-weight: 700;
+          font-family: system-ui, -apple-system, sans-serif; font-size: 14px; letter-spacing: 0.02em;
+          cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); align-self: flex-start;
+          box-shadow: 0 4px 12px rgba(99,145,185,0.25);
         }
-        .submit-btn:hover { background: #1e40af; }
-        .submit-btn:disabled { background: #93c5fd; cursor: not-allowed; }
-        @keyframes modalIn { from { opacity:0; transform: translateY(24px) scale(.98); } }
-        @keyframes overlayIn { from { opacity: 0; } }
-        .info-row { display:flex; align-items:flex-start; gap:10px; padding: 9px 0; border-bottom: 1px solid #eff6ff; }
+        .submit-btn:hover { 
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(99,145,185,0.35); 
+        }
+        .submit-btn:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; transform: none; }
+        
+        @keyframes modalIn { 
+          from { opacity: 0; transform: translateY(30px) scale(0.96); filter: blur(4px); } 
+          to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        @keyframes overlayIn { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(8px); } }
+        
+        .info-row { display:flex; align-items:flex-start; gap:16px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
         .info-row:last-child { border-bottom: none; }
-        .info-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#93c5fd; width:130px; flex-shrink:0; padding-top:2px; }
-        .info-val { font-size:14px; color:#1e293b; flex:1; }
-        .section-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#3b82f6; margin:0 0 14px; }
-        .tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin:2px; }
+        .info-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color: #64748b; width:140px; flex-shrink:0; padding-top:2px; }
+        .info-val { font-size:14px; color:#1e293b; flex:1; font-weight: 500; }
+        .section-title { 
+          font-family: system-ui, -apple-system, sans-serif; font-size: 16px; font-weight: 700; 
+          color: #2B547E; margin: 0 0 16px; 
+          display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::before {
+          content: ''; display: inline-block; width: 4px; height: 16px; 
+          background: #6391B9; border-radius: 4px;
+        }
+        .tag { display:inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin: 3px; letter-spacing: 0.02em; }
+        
+        .details-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .modal-tabs {
+          display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+        }
+        .modal-tabs::-webkit-scrollbar { display: none; }
+        .modal-tab-btn {
+          padding: 12px 20px; border: none; background: transparent;
+          font-family: system-ui, -apple-system, sans-serif; font-size: 14px; white-space: nowrap;
+          cursor: pointer; transition: all 0.2s;
+          border-bottom: 2px solid transparent;
+        }
+        .modal-tab-btn.active {
+          font-weight: 700; color: #fff;
+          border-bottom: 2px solid #6391B9;
+        }
+        .modal-tab-btn.inactive {
+          font-weight: 500; color: rgba(255,255,255,0.6);
+        }
+        .modal-tab-btn.inactive:hover {
+          color: rgba(255,255,255,0.9);
+        }
+
+        /* Responsive Layout Updates */
+        .company-header-layout {
+          display: flex; gap: 18px; align-items: flex-start; flex-direction: column; 
+          margin-bottom: 20px;
+        }
+        .info-row { display:flex; align-items:flex-start; gap:8px; flex-direction: column; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        
+        @media (min-width: 640px) {
+          .company-header-layout {
+            flex-direction: row; align-items: center;
+          }
+          .info-row { flex-direction: row; gap: 16px; }
+        }
+        @media (min-width: 768px) {
+          .details-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
       `}</style>
 
-      {/* Overlay */}
       <div
         onClick={onClose}
         style={{
-          position:'fixed', inset:0, background:'rgba(10,22,40,.72)',
-          backdropFilter:'blur(6px)', zIndex:1000,
+          position:'fixed', inset:0, background:'rgba(10, 15, 25, 0.65)',
+          backdropFilter:'blur(8px)', zIndex:1000,
           display:'flex', alignItems:'center', justifyContent:'center',
-          padding:'8px', animation:'overlayIn .2s ease',
-          overflowY:'auto'
+          padding:'16px', animation:'overlayIn 0.3s ease forwards'
         }}
       >
         <div
           onClick={e => e.stopPropagation()}
           style={{
-            background:'#fff', width:'100%', maxWidth:920,
-            maxHeight:'95vh', minHeight: 0,
-            borderRadius:20, overflow:'hidden',
-            boxShadow:'0 30px 80px rgba(10,22,40,.4)',
+            background:'#fff', width:'100%', maxWidth:960,
+            maxHeight:'90vh', minHeight: 0,
+            borderRadius: 24, overflow:'hidden',
+            boxShadow:'0 25px 80px rgba(0,0,0,0.3)',
             display:'flex', flexDirection:'column',
-            animation:'modalIn .25s cubic-bezier(.16,1,.3,1)',
-            margin:'auto'
+            animation:'modalIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+            margin:'auto',
+            border: '1px solid rgba(255,255,255,0.2)'
           }}
         >
           {/* ── HEADER ── */}
           <div style={{
-            background:'linear-gradient(135deg, #0a1628 0%, #0f2a5e 100%)',
-            padding:'20px 20px 0', flexShrink:0, position:'relative'
+            background: 'linear-gradient(135deg, #1e293b 0%, #2B547E 55%, #6391B9 100%)',
+            padding:'24px 24px 0', flexShrink:0, position:'relative', overflow: 'hidden'
           }}>
-            <button onClick={onClose} style={{
-              position:'absolute', top:20, right:20, width:34, height:34,
-              borderRadius:8, background:'rgba(255,255,255,.1)', border:'none',
-              color:'#fff', fontSize:18, cursor:'pointer', display:'flex',
-              alignItems:'center', justifyContent:'center'
-            }}>✕</button>
+            {/* Background decorators */}
+            <div style={{ position: 'absolute', top: -50, right: -50, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,145,185,.4), transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: 10, left: '20%', width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,145,185,.25), transparent 70%)', pointerEvents: 'none' }} />
 
-            {/* Company identity */}
-            <div style={{ display:'flex', gap:18, alignItems:'center', marginBottom:20 }}>
+            <button onClick={onClose} style={{
+              position:'absolute', top:24, right:24, width:36, height:36,
+              borderRadius:'50%', background:'rgba(255,255,255,0.15)', border:'none',
+              color:'#fff', fontSize:14, cursor:'pointer', display:'flex',
+              alignItems:'center', justifyContent:'center', backdropFilter: 'blur(4px)',
+              transition: 'background 0.2s', zIndex: 10
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+            >✕</button>
+
+            <div className="company-header-layout">
               <div style={{
                 width:64, height:64, borderRadius:16, flexShrink:0,
-                background: company.logo ? 'transparent' : '#1a56db',
+                background: company.logo ? 'transparent' : 'rgba(255,255,255,0.15)',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:24, fontWeight:800, fontFamily:'"Syne",sans-serif', color:'#fff',
-                border:'2px solid rgba(255,255,255,.2)', overflow:'hidden'
+                fontSize:24, fontWeight:800, fontFamily:'system-ui, -apple-system, sans-serif', color:'#fff',
+                border:'2px solid rgba(255,255,255,.2)', overflow:'hidden', backdropFilter: 'blur(4px)'
               }}>
                 {company.logo
                   ? <img src={company.logo} alt={company.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                   : company.name?.charAt(0).toUpperCase()}
               </div>
               <div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginBottom: 2 }}>{company.sector || 'Entreprise'}</div>
                 <h2 style={{
-                  fontFamily:'"Syne",sans-serif', fontWeight:800, fontSize:22,
-                  color:'#fff', margin:'0 0 6px', lineHeight:1.2
+                  fontFamily:'system-ui, -apple-system, sans-serif', fontWeight:800, fontSize: 26,
+                  color:'#fff', margin:'0 0 6px', lineHeight:1.2, letterSpacing: '-0.02em'
                 }}>
                   {company.name}
                   {company.is_verified && (
-                    <span style={{ marginLeft:10, fontSize:11, background:'#22c55e22', color:'#4ade80', border:'1px solid #4ade8044', padding:'2px 8px', borderRadius:20, verticalAlign:'middle' }}>
-                      ✓ Vérifié
+                    <span style={{ marginLeft:10, fontSize:11, background:'rgba(255,255,255,0.15)', color:'#93C5FD', border:'1px solid rgba(255,255,255,0.25)', padding:'3px 10px', borderRadius:20, verticalAlign:'middle', backdropFilter: 'blur(4px)', fontWeight: 600 }}>
+                      ✓ Recommandée
                     </span>
                   )}
                 </h2>
@@ -195,8 +271,8 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
                   <p style={{ margin:'0 0 6px', color:'rgba(255,255,255,.45)', fontSize:13 }}>{company.legal_name}</p>
                 )}
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <StarRating rating={company.average_rating || 0} size={15} />
-                  <span style={{ fontSize:13, color:'rgba(255,255,255,.6)', fontWeight:500 }}>
+                  <StarRating value={company.average_rating || 0} size={15} readonly />
+                  <span style={{ fontSize:13, color:'rgba(255,255,255,.8)', fontWeight:600 }}>
                     {company.average_rating?.toFixed(1) || '–'} · {company.review_count || 0} avis
                   </span>
                 </div>
@@ -204,26 +280,25 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
             </div>
 
             {/* Tabs */}
-            <div style={{ display:'flex', gap:0, overflowX:'auto', scrollbarWidth:'none' }}>
+            <div className="modal-tabs">
               {tabs.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-                  padding:'11px 16px', border:'none', background:'transparent',
-                  fontFamily:'"DM Sans",sans-serif', fontSize:14, whiteSpace:'nowrap',
-                  fontWeight: activeTab === t.id ? 700 : 400,
-                  color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,.45)',
-                  borderBottom: activeTab === t.id ? '2px solid #3b82f6' : '2px solid transparent',
-                  cursor:'pointer', transition:'all .15s'
-                }}>{t.label}</button>
+                <button 
+                  key={t.id} 
+                  onClick={() => setActiveTab(t.id)} 
+                  className={`modal-tab-btn ${activeTab === t.id ? 'active' : 'inactive'}`}
+                >
+                  {t.label}
+                </button>
               ))}
             </div>
           </div>
 
           {/* ── SCROLLABLE BODY ── */}
-          <div style={{ flex:1, overflowY:'auto', padding:'20px 20px' }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'28px 36px', background: '#fff', minHeight: 0 }}>
 
             {/* ══ TAB: DETAILS ══ */}
             {activeTab === 'details' && (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:28 }}>
+              <div className="details-grid">
 
                 {/* Left column */}
                 <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
@@ -321,7 +396,7 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
               <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
 
                 {/* Submit form */}
-                <div style={{ background:'#f8fbff', border:'1.5px solid #bfdbfe', borderRadius:16, padding:24 }}>
+                <div style={{ background:'linear-gradient(135deg, #F8FAFC, #f1f5f9)', border:'1.5px solid #e2e8f0', borderRadius:16, padding:24 }}>
                   <p className="section-title">Donnez votre avis</p>
                   <form onSubmit={handleReviewSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
 
@@ -374,12 +449,12 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
                   ) : (
                     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
                       {reviews.map(r => (
-                        <div key={r.id} style={{ padding:'18px', background:'#f8fbff', border:'1px solid #dbeafe', borderRadius:14 }}>
+                        <div key={r.id} style={{ padding:'18px', background:'#f9fafb', border:'1px solid #e5e5ec', borderRadius:14 }}>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
                             <div>
                               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
                                 <StarRating rating={r.rating} size={14} />
-                                <span style={{ fontSize:15, fontWeight:700, color:'#0a1628', fontFamily:'"Syne",sans-serif' }}>{r.title}</span>
+                                <span style={{ fontSize:15, fontWeight:700, color:'#0a1628', fontFamily:'system-ui, -apple-system, sans-serif' }}>{r.title}</span>
                               </div>
                               <span style={{ fontSize:12, color:'#94a3b8' }}>
                                 {r.is_anonymous ? 'Anonyme' : (r.position || 'Utilisateur')} · {new Date(r.created_at).toLocaleDateString('fr-FR')}
@@ -400,21 +475,35 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
               <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
 
                 {/* Upload form */}
-                <div style={{ background:'#f8fbff', border:'1.5px solid #bfdbfe', borderRadius:16, padding:24 }}>
+                <div style={{ background:'linear-gradient(135deg, #F8FAFC, #f1f5f9)', border:'1.5px solid #e2e8f0', borderRadius:16, padding:24 }}>
                   <p className="section-title">Déposer votre rapport PFE</p>
                   <form onSubmit={handlePfeSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                       <input className="modal-inp" placeholder="Titre du PFE" required
                         value={newPfe.title} onChange={e => setNewPfe({ ...newPfe, title: e.target.value })} />
-                      <input className="modal-inp" placeholder="Domaine (ex: IA, Cybersécurité...)"
+                      <input className="modal-inp" placeholder="Domaine (ex: IA, Web...)"
                         value={newPfe.domain} onChange={e => setNewPfe({ ...newPfe, domain: e.target.value })} />
                     </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                      <input className="modal-inp" placeholder="Auteur (votre nom)"
+                        value={newPfe.author} onChange={e => setNewPfe({ ...newPfe, author: e.target.value })} />
+                      <input className="modal-inp" placeholder="Université / École"
+                        value={newPfe.university} onChange={e => setNewPfe({ ...newPfe, university: e.target.value })} />
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                      <input className="modal-inp" placeholder="Année (ex: 2024)"
+                        value={newPfe.year} onChange={e => setNewPfe({ ...newPfe, year: e.target.value })} />
+                      {/* Empty div for layout if needed or add more info */}
+                      <div />
+                    </div>
+                    <textarea className="modal-inp" placeholder="Résumé du rapport..." rows={2}
+                      value={newPfe.description} onChange={e => setNewPfe({ ...newPfe, description: e.target.value })} />
 
                     {/* File drop zone */}
                     <label style={{
                       display:'flex', flexDirection:'column', alignItems:'center', gap:10,
-                      border:'2px dashed #bfdbfe', borderRadius:12, padding:'24px',
-                      cursor:'pointer', background: newPfe.file ? '#eff6ff' : '#fff',
+                      border:'2px dashed #e2e8f0', borderRadius:12, padding:'24px',
+                      cursor:'pointer', background: newPfe.file ? '#F8FAFC' : '#fff',
                       transition:'background .15s'
                     }}>
                       <span style={{ fontSize:28 }}>📄</span>
@@ -441,15 +530,15 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
                   ) : (
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px,1fr))', gap:16 }}>
                       {pfeReports.map(p => (
-                        <div key={p.id} style={{ background:'#fff', border:'1.5px solid #bfdbfe', borderRadius:14, padding:18, display:'flex', flexDirection:'column', gap:10 }}>
+                        <div key={p.id} style={{ background:'#fff', border:'1.5px solid #e5e5ec', borderRadius:14, padding:18, display:'flex', flexDirection:'column', gap:10 }}>
                           <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
                             <span style={{ fontSize:28, flexShrink:0 }}>📑</span>
                             <div style={{ minWidth:0 }}>
-                              <p style={{ fontFamily:'"Syne",sans-serif', fontWeight:700, fontSize:14, color:'#0a1628', margin:'0 0 4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                              <p style={{ fontFamily:'system-ui, -apple-system, sans-serif', fontWeight:700, fontSize:14, color:'#0a1628', margin:'0 0 4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                                 {p.title}
                               </p>
                               {p.domain && (
-                                <span style={{ fontSize:11, background:'#eff6ff', color:'#1d4ed8', border:'1px solid #bfdbfe', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>
+                                <span style={{ fontSize:11, background:'#F8FAFC', color:'#6391B9', border:'1px solid #e2e8f0', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>
                                   {p.domain}
                                 </span>
                               )}
@@ -461,10 +550,16 @@ export default function CompanyModal({ company, onClose, onReviewAdded }) {
                               {p.content_text}
                             </p>
                           )}
+                          {p.university && (
+                            <p style={{ fontSize:11, color:'#94a3b8', margin:0 }}>🏫 {p.university}</p>
+                          )}
+                          {p.year && (
+                             <p style={{ fontSize:11, color:'#94a3b8', margin:0 }}>📅 {p.year}</p>
+                          )}
                           {p.file_url && (
                             <a href={p.file_url} target="_blank" rel="noreferrer" style={{
                               marginTop:'auto', display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-                              padding:'9px', background:'#1a56db', color:'#fff', borderRadius:10,
+                              padding:'9px', background:'linear-gradient(135deg, #6391B9, #2B547E)', color:'#fff', borderRadius:10,
                               textDecoration:'none', fontSize:13, fontWeight:700
                             }}>
                               ⬇ Télécharger

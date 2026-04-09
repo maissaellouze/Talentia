@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import StudentSidebar from '../../components/layout/StudentSidebar';
+import MainLayout from '../../components/layout/MainLayout';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -232,29 +232,38 @@ export default function OpportunityDetailPage() {
 
   useEffect(() => {
     // Try to fetch from API; fall back to mock
-    fetch(`http://127.0.0.1:8000/opportunities/${id}/`)
+    fetch(`http://127.0.0.1:8000/opportunities/${id}`)
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-      .then(data => { setOpp(data); setLoading(false); })
+      .then(data => { 
+          // Map backend fields to frontend expectations
+          data.skills = data.requirements?.map(r => r.description) || [];
+          setOpp(data); 
+          setLoading(false); 
+      })
       .catch(() => { setOpp({ ...MOCK_OPPORTUNITY, id: parseInt(id) || 1 }); setLoading(false); });
   }, [id]);
 
   const handleApply = async () => {
     if (applied) return;
     setApplyLoading(true);
-    const studentId = localStorage.getItem('studentId') || 1;
+    const studentId = parseInt(localStorage.getItem('studentId')) || 1;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/opportunities/${id}/apply/`, {
+      const res = await fetch(`http://127.0.0.1:8000/opportunities/${id}/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: studentId }),
       });
-      if (res.ok || res.status === 201 || res.status === 200) {
+      if (res.ok) {
         setApplied(true);
       } else {
-        setApplied(true); // optimistic for demo
+        const err = await res.json().catch(() => ({}));
+        if (err.detail === 'You have already applied to this opportunity') {
+          setApplied(true); // Already applied, reflect that
+        }
       }
     } catch {
-      setApplied(true); // optimistic for demo
+      // network error - optimistic
+      setApplied(true);
     } finally {
       setApplyLoading(false);
     }
@@ -281,12 +290,11 @@ export default function OpportunityDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f7f8fa' }}>
-        <StudentSidebar />
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <MainLayout>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '80vh' }}>
           <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: 15 }}>Chargement...</div>
-        </main>
-      </div>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -313,10 +321,7 @@ export default function OpportunityDetailPage() {
         .opp-detail-comment:focus { outline: none; border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13,148,136,.12) !important; }
       `}</style>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f7f8fa' }}>
-        <StudentSidebar />
-
-        <main style={{ flex: 1, overflowY: 'auto' }}>
+      <MainLayout>
           <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 32px 72px' }}>
 
             {/* ── Back link ─────────────────────────────────── */}
@@ -670,8 +675,7 @@ export default function OpportunityDetailPage() {
             </div>
 
           </div>
-        </main>
-      </div>
+      </MainLayout>
     </>
   );
 }

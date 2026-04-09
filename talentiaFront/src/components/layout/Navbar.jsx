@@ -3,7 +3,7 @@ import React from 'react';
 // On remonte d'un niveau (..) pour sortir du dossier layout/modal et aller vers assets
 import logoImg from '../../assets/logo.png'; 
 
-const links = ['Fonctionnalités', 'Comment ça marche', 'Recruteurs'];
+const links = ['Fonctionnalités', 'Comment ça marche'];
 
 export default function Navbar({ onLogin, onSignup, onCompany }) {
   // Couleurs institutionnelles ISSAT Sousse

@@ -114,3 +114,87 @@ def delete_opportunity(opp_id: int, company_id: int, db: Session = Depends(get_d
     db.delete(opp)
     db.commit()
     return {"message": "Offre supprimée"}
+
+@router.get("/opportunities/{opp_id}/applications")
+def get_opportunity_applications(opp_id: int, company_id: int, db: Session = Depends(get_db)):
+    from app.models.student import Student
+    from app.models.education import Education
+    from app.models.user import User
+    
+    # Verify company owns this opportunity
+    opp = db.query(Opportunity).filter(Opportunity.id == opp_id, Opportunity.company_id == company_id).first()
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+        
+    applications = db.query(Application, Student).join(Student, Application.student_id == Student.id).filter(Application.opportunity_id == opp_id).all()
+    
+    results = []
+    for app, student in applications:
+        user = db.query(User).filter(User.id == student.user_id).first()
+        results.append({
+            "id": app.id,
+            "student_id": student.id,
+            "student_name": f"{student.first_name} {student.last_name}",
+            "email": user.email if user else "",
+            "major": student.field_of_study,
+            "university": student.university,
+            "status": app.status,
+            "applied_at": app.submitted_at.strftime("%Y-%m-%d") if app.submitted_at else "Récemment",
+            "gpa": None, # Could be calculated from DB if grades existed
+            "avatar": f"{str(student.first_name)[0]}{str(student.last_name)[0]}".upper()
+        })
+    return results
+
+from pydantic import BaseModel
+class ApplicationStatusUpdate(BaseModel):
+    status: str
+
+@router.patch("/applications/{app_id}")
+def update_application_status(app_id: int, company_id: int, data: ApplicationStatusUpdate, db: Session = Depends(get_db)):
+    app = db.query(Application).filter(Application.id == app_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+        
+    # Verify company owns the opportunity
+    opp = db.query(Opportunity).filter(Opportunity.id == app.opportunity_id, Opportunity.company_id == company_id).first()
+    if not opp:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+        
+    app.status = data.status
+    db.commit()
+    return {"message": "Status updated successfully"}
+
+@router.get("/students")
+def get_all_talents(company_id: int, db: Session = Depends(get_db)):
+    from app.models.student import Student
+    from app.models.user import User
+    from app.models.cv import CV
+    from app.models.skill import Skill
+    
+    # Ideally verify company exists
+    students = db.query(Student).all()
+    
+    results = []
+    for student in students:
+        cv = db.query(CV).filter(CV.student_id == student.id).first()
+        skills = []
+        if cv:
+            skills_db = db.query(Skill).filter(Skill.cv_id == cv.id).all()
+            skills = [s.name for s in skills_db]
+            
+        user = db.query(User).filter(User.id == student.user_id).first()
+            
+        results.append({
+            "id": student.id,
+            "first_name": student.first_name,
+            "last_name": student.last_name,
+            "email": user.email if user else "",
+            "university": student.university,
+            "field_of_study": student.field_of_study,
+            "degree_level": student.degree_level,
+            "skills": skills,
+            "bio": student.bio,
+            "linkedin": student.linkedin,
+            "github": student.github
+        })
+    return results

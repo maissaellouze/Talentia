@@ -1,68 +1,127 @@
+import os
+import sys
+import pandas as pd
+import json
+import random
 import sys
 import os
-import bcrypt
 
-# Ensure Python can find the 'app' folder
-sys.path.append(os.getcwd())
-
+# Ensure we can import from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app.database import SessionLocal
-from app.models.user import User
-from app.models.student import Student
-from app.models.cv import CV # Matches your cv.py filename
+from app.models.company import Societe
+from app.models.opportunity import Opportunity
+import app.models.application
+import app.models.pfe_report
+import app.models.review
+import app.models.user
+import app.models.student
+import app.models.cv
+from sqlalchemy.orm import configure_mappers
+configure_mappers()
 
-def seed_talentia():
-    db = SessionLocal()
+def parse_int(val):
     try:
-        # 1. Ensure User exists
-        test_user = db.query(User).filter(User.email == "test@talentia.tn").first()
-        if not test_user:
-            hashed_pw = bcrypt.hashpw("password123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            test_user = User(
-                email="test@talentia.tn", 
-                password=hashed_pw, 
-                role="student"
-            )
-            db.add(test_user)
-            db.flush() 
-            print("✅ User account ready.")
+        return int(float(val))
+    except:
+        return None
+
+def clean_str(val):
+    if pd.isna(val) or val == 'NaT' or val == 'nan':
+        return None
+    return str(val).strip()
+
+def seed():
+    db = SessionLocal()
+    
+    print("Reading Companies CSV...")
+    df_comp = pd.read_csv(r'c:\Users\Jenzeri\OneDrive\Desktop\2ING-2\miniprojet\Talentia\Scraping\societes_informatique_FULL.csv')
+    df_comp = df_comp.fillna('')
+    
+    # Fill Companies
+    company_ids = []
+    print(f"Found {len(df_comp)} companies.")
+    for idx, row in df_comp.iterrows():
+        # Avoid duplicate rne_id
+        rne = clean_str(row.get('idUnique'))
+        if not rne:
+            continue
+            
+        existing = db.query(Societe).filter(Societe.rne_id == rne).first()
+        if existing:
+            company_ids.append(existing.id)
+            continue
+            
+        socials = {}
+        if clean_str(row.get('linkedin')): socials['linkedin'] = clean_str(row.get('linkedin'))
+        if clean_str(row.get('facebook')): socials['facebook'] = clean_str(row.get('facebook'))
+        if clean_str(row.get('instagram')): socials['instagram'] = clean_str(row.get('instagram'))
         
-        # 2. Ensure Student exists (Linked to User)
-        test_student = db.query(Student).filter(Student.id == 1).first()
-        if not test_student:
-            test_student = Student(
-                id=1,
-                user_id=test_user.id,
-                first_name="Mayssam",
-                last_name="Slimani",
-                university="UVT"
-            )
-            db.add(test_student)
-            db.flush()
-            print("✅ Student profile ready.")
-
-        # 3. Create the CV record using your specific schema
-        existing_cv = db.query(CV).filter(CV.student_id == 1).first()
-        if not existing_cv:
-            new_cv = CV(
-                student_id=1,
-                title="Software Engineer Resume",
-                language="English",
-                file_url="uploads/test_cv.pdf",
-                file_name="test_cv.pdf"
-            )
-            db.add(new_cv)
-            print("✅ CV record created for Student 1.")
-        else:
-            print("ℹ️ Student 1 already has a CV.")
-
+        comp = Societe(
+            rne_id=rne,
+            name=clean_str(row.get('denomination', f'Societe {idx}')),
+            legal_form=clean_str(row.get('formeJuridiqueFr')),
+            activity=clean_str(row.get('domain')),
+            sector=clean_str(row.get('Sector', 'IT')),
+            address=clean_str(row.get('rueFr')),
+            city=clean_str(row.get('villeFr')),
+            code_postal=parse_int(row.get('codePostal')),
+            phone=clean_str(row.get('phone')),
+            email=clean_str(row.get('email')),
+            website=clean_str(row.get('siteweb')),
+            logo=clean_str(row.get('logo')),
+            creation_year=parse_int(row.get('anneeDeCreation')),
+            social_media=socials,
+            is_verified=True,
+            status="verified"
+        )
+        db.add(comp)
         db.commit()
-        print("\n🚀 Database seeding complete! Refresh your browser.")
+        db.refresh(comp)
+        company_ids.append(comp.id)
 
-    except Exception as e:
-        db.rollback()
-        print(f"❌ Error during seeding: {e}")
-    finally:
-        db.close()
+    print("Reading Opportunities CSV...")
+    df_jobs = pd.read_csv(r'c:\Users\Jenzeri\OneDrive\Desktop\2ING-2\miniprojet\Talentia\Scraping\linkedin_jobs_junior_developer__all_all_any.csv')
+    df_jobs = df_jobs.fillna('')
+    
+    print(f"Found {len(df_jobs)} jobs.")
+    if not company_ids:
+        print("No companies found to attach jobs to. Aborting.")
+        return
+        
+    for idx, row in df_jobs.iterrows():
+        title = clean_str(row.get('job_title'))
+        if not title:
+            continue
+            
+        # Randomly assign to a seeded company to populate the platform!
+        cid = random.choice(company_ids)
+        
+        desc = clean_str(row.get('job_description', ''))
+        benefits = clean_str(row.get('benefit', ''))
+        if benefits:
+            desc += "\n\nBenefits: " + benefits
+            
+        loc = clean_str(row.get('location', ''))
+        country = clean_str(row.get('country', ''))
+        if country and country not in loc:
+            loc += f", {country}"
+            
+        opp = Opportunity(
+            company_id=cid,
+            title=title,
+            description=desc,
+            contract_type="CDI" if "senior" not in title.lower() else "CDD",
+            experience_level="Junior",
+            location=loc,
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(opp)
+        
+    db.commit()
+    print("Database seeded successfully!")
+    db.close()
 
 if __name__ == "__main__":
-    seed_talentia()
+    seed()

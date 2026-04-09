@@ -143,8 +143,14 @@ def calculate_match_score(student_data, internship):
     # 1. Technical Skills Match (40%)
     # Pulls from skill.py - Uses semantic similarity for intelligent matching
     tech_score = 0
-    if internship.required_skills:
+    required = []
+    
+    if hasattr(internship, 'requirements') and internship.requirements:
+        required = [r.description.strip() for r in internship.requirements if hasattr(r, 'description')]
+    elif hasattr(internship, 'required_skills') and internship.required_skills:
         required = [s.strip() for s in internship.required_skills.split(",")]
+        
+    if required:
         student_tech = [s.name for s in student_data.get('skills', [])]
         
         matches, total = _match_skills_semantically(required, student_tech, threshold=0.65)
@@ -182,7 +188,8 @@ def calculate_match_score(student_data, internship):
         pref = student_data['preferences']
         preferred_sectors = pref.sectors if hasattr(pref, 'sectors') else ''
         
-        if _match_sector_semantically(internship.sector, preferred_sectors, threshold=0.65):
+        internship_sector = getattr(internship, 'sector', '')
+        if internship_sector and _match_sector_semantically(internship_sector, preferred_sectors, threshold=0.65):
             pref_score = 10
 
     total_score = tech_score + exp_score + edu_lang_score + pref_score

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CompanyCard from "../components/companies/CompanyCard";
 import CompaniesFilter from "../components/companies/CompaniesFilter";
 import CompanyModal from "../components/companies/CompanyModal";
-import MainLayout from "../components/layout/CompanyLayout";
+import MainLayout from "../components/layout/MainLayout";
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 const CompaniesDashboard = () => {
@@ -110,69 +110,126 @@ const CompaniesDashboard = () => {
     fetchCompanies(); // Refresh company list to update ratings
   };
 
-  const activeFiltersStr = [searchTerm, selectedSector, selectedCity].filter(Boolean).length;
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const activeStats = [
+    { icon: '🏢', value: totalCompanies, label: 'Partenaires' },
+    { icon: '🗂️', value: sectors.length, label: 'Secteurs' },
+    { icon: '📍', value: cities.length, label: 'Villes' },
+    { icon: '✨', value: 'IA', label: 'Match Intelligent' },
+  ];
 
   return (
     <MainLayout>
-   <div
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: none; }
+        }
+      `}</style>
+    <div
       style={{
         minHeight: "100%",
         position: "relative",
         overflow: "hidden",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        fontFamily: "'Segoe UI', sans-serif",
+        paddingBottom: 64,
+        background: '#f7f8fa'
       }}
     >
       {/* Background Decorators */}
       <div style={{
         position: 'absolute', top: -200, right: -150, width: 700, height: 700,
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.08), transparent 65%)',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.1), transparent 65%)',
         pointerEvents: 'none', zIndex: 0
       }} />
       <div style={{
         position: 'absolute', bottom: -80, left: -80, width: 450, height: 450,
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,.05), transparent 65%)',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.05), transparent 65%)',
         pointerEvents: 'none', zIndex: 0
       }} />
 
       <div style={{
         width: '100%',
-        maxWidth: 1400,
+        maxWidth: 1200,
         margin: '0 auto',
-        padding: '0 24px',
+        padding: '32px 32px 64px',
         position: 'relative',
         zIndex: 1
       }}>
-        {/* Header Section */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+        {/* ── Hero Banner ─────────────────────────────────────── */}
+        <div style={{
+          borderRadius: 20,
+          background: 'linear-gradient(135deg, #0f2027 0%, #0d4f47 50%, #1a6b5e 100%)',
+          padding: '40px 48px',
+          marginBottom: 28,
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'fadeUp 0.5s ease both'
+        }}>
+          {/* decorative blobs */}
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: '#f0fdfa', border: '1px solid rgba(13,148,136,.2)',
-            color: '#0d9488', fontSize: 12, fontWeight: 700,
-            padding: '8px 16px', borderRadius: 20, letterSpacing: '0.06em',
-            textTransform: 'uppercase', marginBottom: 24
+            position: 'absolute', top: -60, right: -60, width: 260, height: 260,
+            borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,.25), transparent 65%)',
+            pointerEvents: 'none'
+          }} />
+          
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16,
+            background: 'rgba(20,184,166,.15)', border: '1px solid rgba(20,184,166,.35)',
+            color: '#5eead4', fontSize: 11, fontWeight: 700,
+            padding: '6px 14px', borderRadius: 20, letterSpacing: '0.08em',
+            textTransform: 'uppercase'
           }}>
             <span style={{
-              width: 6, height: 6, borderRadius: '50%', background: '#0d9488',
-              boxShadow: '0 0 0 2px rgba(13,148,136,.2)'
-            }}></span>
+              width: 6, height: 6, borderRadius: '50%', background: '#5eead4',
+              boxShadow: '0 0 6px #5eead4'
+            }} />
             ✦ Entreprises Partenaires
           </div>
 
           <h1 style={{
-            fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em',
-            margin: '0 0 16px 0', fontFamily: '"Clash Display", sans-serif',
-            color: '#0a0a12'
+            margin: '0 0 12px', fontSize: 34, fontWeight: 800, color: '#fff',
+            fontFamily: "'Segoe UI', sans-serif", letterSpacing: '-0.02em', lineHeight: 1.2
           }}>
-            Découvrez les entreprises qui recrutent
+            Découvrez le Réseau TalentIA
           </h1>
           <p style={{
-            fontSize: 17, color: '#6b7280', maxWidth: 560,
-            margin: '0 auto', lineHeight: 1.7
+            margin: 0, fontSize: 15, color: 'rgba(255,255,255,.65)', maxWidth: 520, lineHeight: 1.7
           }}>
             Explorez les meilleures entreprises technologiques et trouvez 
-            l'opportunité qui correspond à votre profil.
+            l'environnement idéal pour propulser votre carrière.
           </p>
+        </div>
+
+        {/* ── Stats Row ──────────────────────────────────────── */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 16, marginBottom: 28,
+          animation: 'fadeUp 0.5s 0.1s ease both'
+        }}>
+          {activeStats.map(({ icon, value, label }, i) => (
+            <div key={i} style={{
+              background: '#fff', borderRadius: 14, border: '1px solid #e5e5ec',
+              padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 14,
+              boxShadow: '0 2px 8px rgba(0,0,0,.03)'
+            }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: '#f0fdfa', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: 20, flexShrink: 0
+              }}>
+                {icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0a0a12', lineHeight: 1.1 }}>
+                  {loading && !companies.length ? '—' : value}
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, fontWeight: 500 }}>
+                  {label}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Filter Section */}
@@ -264,7 +321,7 @@ const CompaniesDashboard = () => {
               <p style={{ color: '#6b7280', margin: 0, fontSize: 15 }}>
                 Essayez d'ajuster vos filtres de recherche ou réinitialisez les critères.
               </p>
-              {activeFiltersStr > 0 && (
+              {(searchTerm || selectedSector || selectedCity) && (
                 <button 
                   onClick={clearFilters}
                   style={{ 

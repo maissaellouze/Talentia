@@ -1,25 +1,8 @@
-import {
-  Box,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  useTheme,
-  alpha,
-} from "@mui/material";
-import {
-  Business as BusinessIcon,
-  WorkOutline as WorkIcon,
-  AdminPanelSettings as AdminIcon,
-  ExitToApp as LogoutIcon,
-  Dashboard as DashboardIcon,
-} from "@mui/icons-material";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Logo from '../ui/Logo';
 
-const Sidebar = ({ role = 'student', activeTab, setActiveTab }) => {
-  const theme = useTheme();
+export default function Sidebar({ role = 'student', activeTab, setActiveTab }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,142 +12,138 @@ const Sidebar = ({ role = 'student', activeTab, setActiveTab }) => {
   };
 
   const studentItems = [
-    { label: "Dashboard", path: "/home", icon: <DashboardIcon /> },
-    { label: "Entreprises", path: "/companies", icon: <BusinessIcon /> },
-    { label: "Opportunités", path: "/opportunities", icon: <WorkIcon /> },
-    { label: "Rapports PFE", path: "/reports", icon: <WorkIcon /> },
- 
+    { label: "Dashboard", path: "/home", icon: "📊" },
+    { label: "Entreprises", path: "/companies", icon: "🏢" },
+    { label: "Opportunités", path: "/opportunities", icon: "💼" },
+    { label: "Rapports PFE", path: "/reports", icon: "📄" },
+    { label: "Mon Profil", path: "/profile", icon: "👤" },
   ];
 
   const companyItems = [
-    { label: "Vos Offres", id: "opportunities", icon: <WorkIcon /> },
-    { label: "Profil Entreprise", id: "profile", icon: <BusinessIcon /> },
+    { label: "Vos Offres", id: "opportunities", icon: "💼" },
+    { label: "Profil Entreprise", id: "profile", icon: "🏢" },
+    { label: "Talents", id: "talents", icon: "👥", path: "/company-dashboard/talents" },
   ];
 
   const items = role === 'student' ? studentItems : companyItems;
 
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        bgcolor: "#fff",
-        borderRight: "1px solid #e5e5ec",
-        display: "flex",
-        flexDirection: "column",
-        position: 'sticky',
-        top: 0,
-        width: 260,
-        zIndex: 100
-      }}
-    >
-      <Box
-        sx={{ p: 3, mb: 2, display: "flex", alignItems: "center", gap: 1.5 }}
-      >
-        <Box
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: "10px",
-            background: theme.palette.primary.main || '#0d9488',
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Box sx={{ width: 18, height: 3, bgcolor: "white", mb: 0.5 }} />
-          <Box sx={{ width: 3, height: 9, bgcolor: "white" }} />
-        </Box>
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: '"Clash Display", sans-serif',
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            color: "#0a0a12",
-          }}
-        >
-          Talent<span style={{ color: theme.palette.primary.main || '#0d9488' }}>IA</span>
-        </Typography>
-      </Box>
+    <aside style={{ 
+      width: 280, 
+      background: '#fff', 
+      borderRight: '1px solid #f1f1f1', 
+      padding: '2.5rem 1.5rem',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'sticky',
+      top: 0,
+      height: '100vh',
+      flexShrink: 0,
+      zIndex: 100
+    }}>
+      {/* Branding */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '3rem', padding: '0 0.5rem' }}>
+        <Logo size={32} />
+        <span style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 20, fontWeight: 700 }}>
+          Talent<span style={{ color: '#0d9488' }}>IA</span>
+        </span>
+      </div>
 
-      <List sx={{ px: 2, flexGrow: 1 }}>
+      <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+        <h2 style={{ fontSize: 12, fontWeight: 700, margin: 0, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {role === 'student' ? 'Menu Étudiant' : 'Portail Entreprise'}
+        </h2>
+      </div>
+      
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
         {items.map((item) => {
           const isActive = role === 'student' 
             ? location.pathname === item.path 
-            : activeTab === item.id;
+            : item.path 
+              ? location.pathname === item.path
+              : activeTab === item.id;
 
           const handleClick = () => {
             if (role === 'student') navigate(item.path);
+            else if (item.path) navigate(item.path);
             else setActiveTab(item.id);
           };
 
           return (
-            <ListItem disablePadding key={item.label} sx={{ mb: 1 }}>
-              <ListItemButton
-                onClick={handleClick}
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive
-                    ? alpha(theme.palette.primary.main || '#0d9488', 0.1)
-                    : "transparent",
-                  color: isActive ? (theme.palette.primary.main || '#0d9488') : "#6b7280",
-                  "&:hover": {
-                    bgcolor: isActive
-                      ? alpha(theme.palette.primary.main || '#0d9488', 0.15)
-                      : alpha(theme.palette.primary.main || '#0d9488', 0.05),
-                    color: isActive ? (theme.palette.primary.main || '#0d9488') : "#0a0a12",
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 500,
-                    fontSize: "14px",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
+            <NavItem 
+              key={item.label}
+              active={isActive} 
+              onClick={handleClick}
+              icon={item.icon}
+            >
+              {item.label}
+            </NavItem>
           );
         })}
-      </List>
+      </nav>
 
-      <Box sx={{ p: 2, borderTop: '1px solid #e5e5ec' }}>
-        <ListItemButton
+      <div style={{ paddingTop: '1.5rem', borderTop: '1px solid #f3f4f6' }}>
+        <button 
           onClick={handleLogout}
-          sx={{
-            borderRadius: 2,
-            color: "#6b7280",
-            "&:hover": {
-              bgcolor: alpha(theme.palette.error?.main || '#ef4444', 0.05),
-              color: theme.palette.error?.main || '#ef4444',
-            },
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 1rem', 
+            borderRadius: 12, border: 'none', background: 'transparent', color: '#6b7280',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+            width: '100%', textAlign: 'left'
           }}
+          onMouseOver={e => e.currentTarget.style.background = '#f9fafb'}
+          onMouseOut={e => e.currentTarget.style.background = 'transparent'}
         >
-          <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText
-            primary="Déconnexion"
-            primaryTypographyProps={{
-              fontWeight: 500,
-              fontSize: "14px",
-            }}
-          />
-        </ListItemButton>
-      </Box>
-    </Box>
+          <span style={{ fontSize: 18 }}>🔖</span> Déconnexion
+        </button>
+      </div>
+    </aside>
   );
-};
+}
 
-export default Sidebar;
-const studentItems = [
-  { label: "Dashboard", path: "/home", icon: <DashboardIcon /> },
-  { label: "Entreprises", path: "/companies", icon: <BusinessIcon /> },
-  { label: "Opportunités", path: "/opportunities", icon: <WorkIcon /> },
-  { label: "Rapports PFE", path: "/reports", icon: <WorkIcon /> },
-];
+function NavItem({ active, children, onClick, icon }) {
+  const [hovered, setHovered] = useState(false);
+  const isActive = active;
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        textAlign: 'left',
+        padding: '11px 1rem',
+        borderRadius: 12,
+        border: 'none',
+        background: isActive ? '#f0fdfa' : hovered ? '#f9fafb' : 'transparent',
+        color: isActive ? '#0d9488' : hovered ? '#374151' : '#6b7280',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        fontWeight: isActive ? 700 : 500,
+        fontSize: 14,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        overflow: 'hidden',
+        width: '100%',
+      }}
+    >
+      {/* Green left accent bar for active item */}
+      {isActive && (
+        <span style={{
+          position: 'absolute',
+          left: 0,
+          top: '20%',
+          height: '60%',
+          width: 3,
+          borderRadius: '0 3px 3px 0',
+          background: '#0d9488',
+        }} />
+      )}
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+      {children}
+    </button>
+  );
+}
+

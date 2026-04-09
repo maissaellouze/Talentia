@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Depends, Query, Form
 from sqlalchemy.orm import Session
 import shutil
 import os
@@ -21,41 +21,57 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.post("/upload")
 async def upload_report(
     file: UploadFile = File(...),
-    domain: str = "Informatique",
+    title: str = Form(None),
+    domain: str = Form("Informatique"),
+    author: str = Form(None),
+    university: str = Form(None),
+    year: str = Form(None),
+    description: str = Form(None),
     db: Session = Depends(get_db)
 ):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    try:
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    # sauvegarde fichier
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        # sauvegarde fichier
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    # extraction texte
-    text = extract_text_from_pdf(file_path)
+        # extraction texte
+        text = extract_text_from_pdf(file_path)
 
-    if not text:
-        return {"error": "Impossible d'extraire le texte"}
+        # embedding
+        embedding = generate_embedding(text) if text else None
 
-    # embedding
-    embedding = generate_embedding(text)
+        report = PFEReport(
+            title=title if title else file.filename,
+            domain=domain,
+            author=author,
+            university=university,
+            year=year,
+            description=description,
+            file_url=f"/uploads/{file.filename}",
+            content_text=text,
+            embedding=embedding,
+            created_at=datetime.utcnow()
+        )
 
-    if not embedding:
-        return {"error": "Erreur génération embedding"}
+        db.add(report)
+        db.commit()
+        db.refresh(report)
 
-    report = PFEReport(
-        title=file.filename,
-        domain=domain,
-        file_url=file_path,
-        content_text=text,
-        embedding=embedding,
-        created_at=datetime.utcnow()
-    )
+        return {"message": "Report uploaded", "id": report.id}
+    except Exception as e:
+        print(f"❌ Upload Error: {e}")
+        return {"error": str(e)}
 
-    db.add(report)
-    db.commit()
-    db.refresh(report)
 
-    return {"message": "Report uploaded", "id": report.id}
+@router.patch("/{report_id}/view")
+def increment_view(report_id: int, db: Session = Depends(get_db)):
+    report = db.query(PFEReport).filter(PFEReport.id == report_id).first()
+    if report:
+        report.views += 1
+        db.commit()
+    return {"views": report.views if report else 0}
 
 
 # =========================
@@ -142,6 +158,11 @@ def get_reports(
             "id": r.id,
             "title": r.title,
             "domain": r.domain,
+            "author": r.author,
+            "university": r.university,
+            "year": r.year,
+            "description": r.description,
+            "views": r.views,
             "created_at": r.created_at
         }
         for r in reports

@@ -11,7 +11,9 @@ import CompanyApplicationsPage from './pages/opportunities/CompanyApplicationsPa
 
 import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
+import TalentsPage from './pages/companies/TalentsPage';
 import Reports from './pages/Reports'; // Correction ici : "./" au lieu de "../"
+import StudentProfile from './pages/StudentProfile';
 
 // Components
 import Modal from './components/modal/Modal';
@@ -46,6 +48,7 @@ export default function App() {
 
         {/* Route Dashboard Entreprise (Privé) */}
         <Route path="/company-dashboard" element={<CompanyDashboard />} />
+        <Route path="/company-dashboard/talents" element={<TalentsPage />} />
 
         {/* Route 4: AI Recommendations Page */}
         <Route path="/opportunities" element={<OpportunitiesPage />} />
@@ -57,6 +60,9 @@ export default function App() {
 
         {/* REPORT PFE */}
         <Route path="/reports" element={<Reports />} />
+
+        {/* Student Profile Settings */}
+        <Route path="/profile" element={<StudentProfile />} />
       </Routes>
 
       {/* Global Modals for Login/Signup */}

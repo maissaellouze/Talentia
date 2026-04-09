@@ -30,13 +30,17 @@ def clean_text(text: str):
     return text.strip()
 
 def extract_text_from_pdf(path: str):
-    reader = PdfReader(path)
-    text = ""
-    for page in reader.pages:
-        content = page.extract_text()
-        if content:
-            text += content
-    return clean_text(text)
+    try:
+        reader = PdfReader(path)
+        text = ""
+        for page in reader.pages:
+            content = page.extract_text()
+            if content:
+                text += content
+        return clean_text(text)
+    except Exception as e:
+        print(f"⚠️ PDF Extraction Error ({path}): {e}")
+        return ""
 
 def generate_embedding(text: str):
     if not text:

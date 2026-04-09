@@ -25,7 +25,22 @@ class SocieteCreate(SocieteBase):
     name: str
     email: str
     industry: Optional[str] = None
+    activity: Optional[str] = None
     description: Optional[str] = None
+    legal_name: Optional[str] = None
+    sector: Optional[str] = None
+    naf_code: Optional[str] = None
+    legal_form: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    code_postal: Optional[Any] = None
+    creation_year: Optional[Any] = None
+    employee_count: Optional[Any] = None
+    website: Optional[str] = None
+    social_media: Optional[Dict[str, Any]] = None
+    main_domain: Optional[str] = None
+    secondary_domains: Optional[Any] = None
+    technologies: Optional[Any] = None
 
 class SocieteUpdate(SocieteBase):
     pass
