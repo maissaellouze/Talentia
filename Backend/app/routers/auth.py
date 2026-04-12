@@ -38,9 +38,9 @@ from app.models.preference import Preference
 
 from app.schemas.student_schema import StudentRegister
 from app.schemas.company_schema import SocieteCreate as CompanyCreate
+from fastapi import APIRouter
 
 
-router = APIRouter(prefix="/auth", tags=["Registration"])
 
 # ── Configuration IA ──
 from huggingface_hub import InferenceClient
@@ -48,11 +48,11 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
 HF_TOKEN = os.getenv("HF_TOKEN")
+MODEL_ID  = "Qwen/Qwen2.5-7B-Instruct"
 
 client = InferenceClient(
-    model="mistralai/Mistral-7B-Instruct-v0.2",
+    model=MODEL_ID,
     token=HF_TOKEN
 )
 
@@ -72,8 +72,8 @@ router = APIRouter(prefix="/auth", tags=["Registration"])
 # ── Config email ──
 SMTP_HOST     = "smtp.gmail.com"
 SMTP_PORT     = 587
-SMTP_EMAIL    = "maissaellouze02@gmail.com"
-SMTP_PASSWORD = "hood qlfc ummf vcka"
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # Stockage OTP en mémoire { email: { code, expires_at } }
 otp_store: dict = {}
@@ -163,30 +163,34 @@ def clean_experiences(experiences: list) -> list:
         "end_date": clean_date(e.get("end_date")),
     } for e in experiences if isinstance(e, dict)]
 def ask_ai_to_format(raw_text: str) -> dict:
+    """
+    Extrait les données du CV en utilisant Groq (primaire) ou Hugging Face (fallback).
+    """
     system_instruction = (
-        "Tu es un expert RH. Tu extrais les informations d'un CV. "
-        "Réponds UNIQUEMENT par un objet JSON valide, sans texte avant ou après."
+        "Tu es un expert RH spécialisé dans l'extraction de données de CV. "
+        "Réponds UNIQUEMENT par un objet JSON valide suivant le format demandé."
     )
     
-    # Limiter le texte pour éviter de dépasser les limites de tokens d'entrée
-    input_text = raw_text[:4000] 
+    # Limiter le texte pour les limites de tokens
+    input_text = raw_text[:5000] 
     
     prompt = f"""
     Extrais les données de ce CV au format JSON suivant :
     {{
-      "email": "", "firstName": "", "lastName": "", "phone": "", 
+      "email": "", "firstName": "", "lastName": "", "phone": "", "city": "",
       "university": "", "field_of_study": "", "degree_level": "", 
       "skills": [{{"name": "", "category": "", "level": ""}}],
       "experiences": [{{"company": "", "position": "", "description": "", "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD ou null"}}],
       "languages": [{{"name": "", "level": ""}}],
-      "soft_skills": [{{"name": "", "level": ""}}]
+      "soft_skills": [{{"name": "", "level": ""}}],
+      "education": []
     }}
     
     CV : {input_text}
     """
 
+    # 1. Tentative avec Groq
     try:
-        # Appel à l'API Groq (plus puissante pour ce format)
         chat_completion = groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_instruction},
@@ -195,40 +199,49 @@ def ask_ai_to_format(raw_text: str) -> dict:
             model=GROQ_MODEL,
             temperature=0.1,
             stream=False,
-            response_format={"type": "json_object"} # Force le format JSON
+            response_format={"type": "json_object"}
         )
-
         content = chat_completion.choices[0].message.content.strip()
-        
-        # Robust JSON extraction (from stashed logic)
-        try:
-            # Try direct block removal
-            json_str = content.replace("```json", "").replace("```", "").strip()
-            data = json.loads(json_str)
-        except:
-            # Try finding the first { and last }
-            try:
-                start = content.find('{')
-                end = content.rfind('}') + 1
-                if start != -1 and end != 0:
-                    data = json.loads(content[start:end])
-                else:
-                    raise ValueError("No JSON found")
-            except:
-                print(f"DEBUG: Failed to parse AI response: {content}")
-                raise HTTPException(status_code=422, detail="L'IA n'a pas renvoyé un format JSON valide.")
-        
-        # Nettoyage des expériences avec vos fonctions existantes
+        data = json.loads(content)
         data["experiences"] = clean_experiences(data.get("experiences", []))
         return data
-
-    except HTTPException:
-        raise
     except Exception as e:
-        print(f"Erreur Groq/Analyse : {str(e)}")
+        print(f"DEBUG: Groq failed, falling back to Hugging Face... Error: {e}")
+
+    # 2. Fallback avec Hugging Face
+    try:
+        response = client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1500,
+            temperature=0.1
+        )
+        content = response.choices[0].message.content.strip()
+        
+        # Robust JSON extraction for HF models that might include markdown code blocks
+        json_str = content
+        if "```json" in content:
+            json_str = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            json_str = content.split("```")[1].split("```")[0].strip()
+        
+        # If no markdown, try searching for the first {
+        if "{" not in json_str:
+            start = content.find('{')
+            end = content.rfind('}') + 1
+            if start != -1 and end != 0:
+                json_str = content[start:end]
+
+        data = json.loads(json_str)
+        data["experiences"] = clean_experiences(data.get("experiences", []))
+        return data
+    except Exception as e:
+        print(f"ERROR: Both Groq and HF failed: {e}")
         raise HTTPException(
             status_code=503, 
-            detail="Le service d'analyse IA est indisponible ou a échoué."
+            detail="Les services d'analyse IA (Groq & HuggingFace) sont actuellement indisponibles."
         )
 
 def clean_int(val: Any) -> Optional[int]:
@@ -248,18 +261,17 @@ def clean_list(val: Any) -> List[str]:
         return [x.strip() for x in val.split(",") if x.strip()]
     return []
 
+# Supprimé car fusionné avec la version ci-dessus
+# ask_ai_to_format était défini deux fois.
+
+
 def ask_ai_to_format_company(raw_text: str) -> dict:
     system_instruction = "Tu es un expert en analyse d'entreprises. Réponds UNIQUEMENT avec du JSON valide."
     prompt = f"""Extrais les données de l'entreprise en JSON. 
     Format: rne_id, name, legal_name, activity, sector, naf_code, legal_form, address, city, code_postal, creation_year, employee_count, description, website, email, phone, main_domain, secondary_domains (list), technologies (list), social_media (dict).
     
     Texte: {raw_text}"""
-    response = groq_client.chat.completions.create(
-        messages=[{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}],
-        model=GROQ_MODEL,
-        temperature=0.1,
-        response_format={"type": "json_object"}
-    )
+    response = client.chat_completion(messages=[{"role": "system", "content": system_instruction}, {"role": "user", "content": prompt}], max_tokens=1000, temperature=0.1)
     content = response.choices[0].message.content.strip()
     
     try:
@@ -499,7 +511,7 @@ async def verify_otp(email: str = Form(...), code: str = Form(...)):
     raise HTTPException(status_code=400, detail="Invalid OTP")
 
 # Security
-SECRET_KEY = "talentia_secret_key_change_in_production"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 1440
 # pwd_context removed, using app.utils.security
