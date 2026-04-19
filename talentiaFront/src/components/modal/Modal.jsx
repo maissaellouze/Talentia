@@ -127,11 +127,12 @@ export default function Modal({ mode, onClose }) {
   }
 
   // --- ÉTAPE 6 : VÉRIFICATION & INSCRIPTION FINALE ---
+ // --- ÉTAPE 6 : VÉRIFICATION & INSCRIPTION FINALE ---
   async function handleVerifyAndRegister(otpCode) {
     setOtpError(null);
     setSubmitting(true);
     try {
-      // 1. Vérification du code
+      // 1. Vérification du code OTP auprès du backend
       const fdOtp = new FormData();
       fdOtp.append('email', formData.email);
       fdOtp.append('code',  otpCode);
@@ -142,12 +143,100 @@ export default function Modal({ mode, onClose }) {
         throw new Error(err.detail || 'Code OTP incorrect');
       }
 
-      // 2. Finalisation (Appel API Register)
+      // 2. Si l'OTP est bon, on finalise l'inscription
       await handleFinalize(otpCode);
     } catch (e) {
       setOtpError(e.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleFinalize(otpCode) {
+    const endpoint = cvFile ? 'register/student/auto' : 'register/student/manual';
+    const fd = new FormData();
+
+    // 1. Mot de passe commun
+    fd.append('password', formData.password);
+
+    if (cvFile) {
+      // --- MODE AUTOMATIQUE (Avec CV) ---
+      fd.append('file', cvFile);
+      
+      const overrides = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        university: formData.universite,
+        field_of_study: formData.filiere,
+        degree_level: formData.niveau,
+        skills: skills,
+        experiences: experiences,
+        languages: languages,
+        soft_skills: [] 
+      };
+      
+      fd.append('overrides', JSON.stringify(overrides));
+      fd.append('prefs', JSON.stringify({ ...prefs, otp_code: otpCode }));
+
+    } else {
+      // --- MODE MANUEL (Sans CV) ---
+      fd.append('email', formData.email);
+      fd.append('first_name', formData.firstName);
+      fd.append('last_name', formData.lastName);
+      fd.append('university', formData.universite);
+      fd.append('field_of_study', formData.filiere);
+      fd.append('degree_level', formData.niveau);
+      fd.append('phone', formData.phone);
+      
+      fd.append('skills', JSON.stringify(skills));
+      fd.append('experiences', JSON.stringify(experiences));
+      fd.append('languages', JSON.stringify(languages));
+      fd.append('soft_skills', JSON.stringify([]));
+      
+      fd.append('prefs', JSON.stringify({ ...prefs, otp_code: otpCode }));
+    }
+
+    const res = await fetch(`${API}/${endpoint}`, { 
+      method: 'POST', 
+      body: fd 
+    });
+    
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Erreur lors de l'inscription.");
+    }
+    
+    setStep(7); // Succès : Écran final
+    setTimeout(() => {
+      onClose();
+      navigate('/opportunities');
+    }, 3000); 
+  }
+
+  async function handleLogin(e) {
+    if (e) e.preventDefault();
+    setLoginErr(null);
+    setLoginLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('username', loginCreds.email.trim());
+      fd.append('password', loginCreds.password);
+      const res = await fetch(`${API}/login`, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Email ou mot de passe incorrect');
+      const data = await res.json();
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('role', data.role);
+      if (data.company_id) localStorage.setItem('companyId', String(data.company_id));
+      if (data.student_id) localStorage.setItem('studentId', String(data.student_id));
+      onClose();
+      if (data.role === 'company') navigate('/company-dashboard');
+      else navigate('/opportunities');
+    } catch (e) {
+      setLoginErr(e.message);
+    } finally {
+      setLoginLoading(false);
     }
   }
 

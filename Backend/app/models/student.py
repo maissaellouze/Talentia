@@ -26,3 +26,4 @@ class Student(Base):
 
     # Linking back to the user
     user = relationship("User", back_populates="student")
+    project_ideas = relationship("ProjectIdea", back_populates="student")
