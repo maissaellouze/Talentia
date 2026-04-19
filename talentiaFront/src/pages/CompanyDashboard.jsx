@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Sidebar from '../components/companies/SideBar';
 
@@ -15,10 +15,7 @@ function Field({ label, children }) {
 const API = 'http://127.0.0.1:8000/company';
 
 export default function CompanyDashboard() {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const initialTab = searchParams.get('tab') || 'opportunities';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState('opportunities');
   const [profile, setProfile] = useState(null);
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -203,6 +200,41 @@ export default function CompanyDashboard() {
             pointerEvents: 'none', zIndex: 0
           }} />
 
+              {loading ? <p>Chargement...</p> : opportunities.length === 0 ? (
+                <div style={{ padding: '4rem', textAlign: 'center', background: '#fff', borderRadius: 20, border: '1px dashed #ccc' }}>
+                   <p style={{ color: '#6b7280' }}>Aucune offre publiée pour le moment.</p>
+                   <button onClick={() => setShowCreateModal(true)} style={{ color: '#0d9488', background: 'none', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Publier la première →</button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {opportunities.map(opp => (
+                    <div key={opp.id} style={{ background: '#fff', padding: '1.5rem', borderRadius: 12, border: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h3 style={{ fontWeight: 700, margin: '0 0 5px 0' }}>{opp.title}</h3>
+                        <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>{opp.location} • {opp.contract_type}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                        <button
+                          onClick={() => navigate(`/company-dashboard/opportunities/${opp.id}/applications`)}
+                          style={{
+                            background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1',
+                            padding: '7px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                            fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
+                            transition: 'all 0.18s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#0d9488'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#f0fdfa'; e.currentTarget.style.color = '#0d9488'; }}
+                        >
+                          👥 {opp.applications_count || 0} candidature{opp.applications_count !== 1 ? 's' : ''}
+                        </button>
+                        <button onClick={() => setEditingOpportunity(opp)} style={{ background: '#f3f4f6', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Modifier</button>
+                        <button onClick={() => handleDeleteOpportunity(opp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', fontSize: 12, cursor: 'pointer' }}>Supprimer</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
           {/* Hero Banner for Company */}
           <div style={{
             borderRadius: 24,
@@ -307,28 +339,18 @@ export default function CompanyDashboard() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                           <div style={{ textAlign: 'right', paddingRight: 16, borderRight: '1px solid #f1f5f9' }}>
-                            <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 18 }}>{opp.applications_count || 0}</div>
-                            <div style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase', fontWeight: 700 }}>Candidat{ (opp.applications_count || 0) > 1 ? 's' : ''}</div>
+                            <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 16 }}>{opp.applications_count || 0}</div>
+                            <div style={{ color: '#94a3b8', fontSize: 11, textTransform: 'uppercase', fontWeight: 600 }}>Candidat{ (opp.applications_count || 0) > 1 ? 's' : ''}</div>
                           </div>
-                          
-                          <button 
-                            onClick={() => navigate(`/company-dashboard/opportunities/${opp.id}/applications`)}
-                            style={{ background: '#0d9488', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                          >Voir Candidatures →</button>
-
-                          <div style={{ display: 'flex', gap: 6 }}>
+                          <div style={{ display: 'flex', gap: 8 }}>
                             <button 
                               onClick={() => setEditingOpportunity(opp)} 
-                              style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '8px', borderRadius: 8, cursor: 'pointer' }}
-                              title="Modifier"
-                            >✏️</button>
+                              style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '8px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 600, color: '#334155' }}
+                            >Modifier</button>
                             <button 
                               onClick={() => handleDeleteOpportunity(opp.id)} 
-                              style={{ background: '#fff0f0', border: '1px solid #fee2e2', padding: '8px', color: '#ef4444', borderRadius: 8, cursor: 'pointer' }}
-                              title="Supprimer"
-                            >🗑️</button>
+                              style={{ background: 'transparent', border: 'none', padding: '8px', color: '#ef4444', fontSize: 13, cursor: 'pointer', fontWeight: 500 }}
+                            >Supprimer</button>
                           </div>
                         </div>
                       </div>
