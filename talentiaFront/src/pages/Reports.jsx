@@ -1,5 +1,15 @@
 import MainLayout from "../components/layout/MainLayout";
 import React, { useState, useEffect } from "react";
+
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 // ─── Mock data (remplace par ton API) ────────────────────────────────────────
 const MOCK_REPORTS = [
   { id: 1, title: "Système de recommandation d'emploi basé sur le Deep Learning", domain: "IA", author: "Ahmed Ben Ali", year: "2024", university: "ESPRIT", views: 342, description: "Ce projet explore l'utilisation des réseaux de neurones profonds pour personnaliser les recommandations d'offres d'emploi selon le profil du candidat. Le système atteint un taux de pertinence de 87% sur les données de test." },
@@ -62,9 +72,9 @@ function ReportCardNew({ report, delay = 0, onView }) {
         background: "#fff",
         borderRadius: 20,
         padding: "24px",
-        border: `1.5px solid ${hovered ? "#0d9488" : "#f1f5f9"}`,
+        border: `1.5px solid ${hovered ? COLORS.blueMain : "#f1f5f9"}`,
         boxShadow: hovered
-          ? "0 8px 32px rgba(13,148,136,0.12)"
+          ? `0 8px 32px rgba(99, 145, 185, 0.15)`
           : "0 1px 3px rgba(0,0,0,0.05)",
         transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
         transform: hovered ? "translateY(-3px)" : "translateY(0)",
@@ -123,9 +133,9 @@ function ReportCardNew({ report, delay = 0, onView }) {
         <button
           onClick={(e) => { e.stopPropagation(); onView && onView(report); }}
           style={{
-            background: hovered ? "#0d9488" : "transparent",
-            color: hovered ? "#fff" : "#0d9488",
-            border: "1.5px solid #0d9488",
+            background: hovered ? "#6391B9" : "transparent",
+            color: hovered ? "#fff" : "#6391B9",
+            border: "1.5px solid #6391B9",
             borderRadius: 10, padding: "8px 16px",
             fontSize: 13, fontWeight: 600, cursor: "pointer",
             transition: "all 0.2s",
@@ -171,7 +181,7 @@ function SearchBarNew({ setQuery, query }) {
           fontFamily: "inherit",
           boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
         }}
-        onFocus={e => e.target.style.borderColor = "#0d9488"}
+        onFocus={e => e.target.style.borderColor = "#6391B9"}
         onBlur={e => e.target.style.borderColor = "#e2e8f0"}
       />
       {query && (
@@ -311,19 +321,19 @@ useEffect(() => {
           <div style={{
             position: "absolute", right: -40, top: -40,
             width: 220, height: 220, borderRadius: "50%",
-            background: "rgba(13,148,136,0.15)",
+            background: "rgba(99, 145, 185,0.15)",
           }} />
           <div style={{
             position: "absolute", right: 60, bottom: -60,
             width: 160, height: 160, borderRadius: "50%",
-            background: "rgba(13,148,136,0.08)",
+            background: "rgba(99, 145, 185,0.08)",
           }} />
 
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              background: "rgba(13,148,136,0.2)",
-              border: "1px solid rgba(13,148,136,0.4)",
+              background: "rgba(99, 145, 185,0.2)",
+              border: "1px solid rgba(99, 145, 185,0.4)",
               borderRadius: 20, padding: "6px 14px",
               fontSize: 12, color: "#5eead4", fontWeight: 600,
               marginBottom: 16, letterSpacing: "0.05em",
@@ -346,7 +356,7 @@ useEffect(() => {
 
         {/* ── Stats ── */}
         <div style={{ display: "flex", gap: 16, marginBottom: 32, flexWrap: "wrap" }}>
-          <StatBadge icon="📄" value={counts.total} label="Rapports disponibles" color="#0d9488" />
+          <StatBadge icon="📄" value={counts.total} label="Rapports disponibles" color="#6391B9" />
           <StatBadge icon="🤖" value={counts.IA || 0} label="Intelligence Artificielle" color="#8b5cf6" />
           <StatBadge icon="🌐" value={counts.Web || 0} label="Développement Web" color="#3b82f6" />
           <StatBadge icon="📱" value={counts.Mobile || 0} label="Mobile" color="#ec4899" />
@@ -405,7 +415,7 @@ useEffect(() => {
                 style={{
                   padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
                   cursor: "pointer", border: "none", transition: "all 0.2s",
-                  background: (domain === d || (d === "total" && domain === "")) ? "#0d9488" : "#f1f5f9",
+                  background: (domain === d || (d === "total" && domain === "")) ? "#6391B9" : "#f1f5f9",
                   color: (domain === d || (d === "total" && domain === "")) ? "#fff" : "#64748b",
                 }}
               >
@@ -417,8 +427,8 @@ useEffect(() => {
           <button 
             onClick={() => setShowUpload(true)}
             style={{ 
-              background: "#0d9488", color: "#fff", border: "none", padding: "10px 20px", 
-              borderRadius: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(13,148,136,0.2)" 
+              background: "#6391B9", color: "#fff", border: "none", padding: "10px 20px", 
+              borderRadius: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(99, 145, 185,0.2)" 
             }}
           >
             + Soumettre mon Rapport
@@ -491,7 +501,7 @@ useEffect(() => {
                    <input type="file" name="file" accept=".pdf" required style={{ fontSize: 13 }} />
                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>Format PDF uniquement</div>
                 </div>
-                <button type="submit" style={{ background: "#0d9488", color: "#fff", border: "none", padding: "14px", borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Publier le Rapport</button>
+                <button type="submit" style={{ background: "#6391B9", color: "#fff", border: "none", padding: "14px", borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Publier le Rapport</button>
               </div>
             </form>
           </div>
@@ -556,7 +566,7 @@ useEffect(() => {
 
             {selectedReport.url ? (
               <a href={selectedReport.url} target="_blank" rel="noreferrer" style={{
-                display: 'block', textAlign: 'center', background: '#0d9488', color: '#fff',
+                display: 'block', textAlign: 'center', background: '#6391B9', color: '#fff',
                 padding: '12px', borderRadius: 12, fontWeight: 700, textDecoration: 'none',
               }}>
                 Télécharger / Voir le PDF →

@@ -1,31 +1,63 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Pages - Tous les imports pointent maintenant vers l'intérieur de ./src
+// --- IMPORT DES PAGES ---
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import CompaniesDashboard from './pages/CompaniesDashboard';
 import OpportunitiesPage from './pages/opportunities/OpportunitiesPage';
 import OpportunityDetailPage from './pages/opportunities/OpportunityDetailPage';
 import CompanyApplicationsPage from './pages/opportunities/CompanyApplicationsPage';
-
 import AdminDashboard from './pages/AdminDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
 import TalentsPage from './pages/companies/TalentsPage';
-import Reports from './pages/Reports'; // Correction ici : "./" au lieu de "../"
+import Reports from './pages/Reports';
 import StudentProfile from './pages/StudentProfile';
+import StudentDemandesPage from './pages/Studentdemandespage';
+import TeacherDemandesPage from './pages/Teacherdemandespage';
 
-// Components
+// --- IMPORT DES COMPOSANTS ---
 import Modal from './components/modal/Modal';
 import CompanyRegisterModal from './components/modal/CompanyRegisterModal';
 
 export default function App() {
   const [modal, setModal] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+
+  /**
+   * Fonction pour extraire le rôle du token JWT stocké dans le localStorage
+   */
+  const getRoleFromToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      // Un JWT est composé de 3 parties séparées par des points. 
+      // La 2ème partie (index 1) contient les données (payload).
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      console.log("Rôle détecté dans le token:", payload.role);
+      return payload.role; // Devrait être 'student', 'teacher' ou 'company'
+    } catch (e) {
+      console.error("Erreur de décodage du token:", e);
+      return null;
+    }
+  };
+
+  /**
+   * useEffect pour mettre à jour le rôle au chargement initial 
+   * et à chaque fois qu'une modal est fermée (après un login réussi par exemple)
+   */
+  useEffect(() => {
+    const role = getRoleFromToken();
+    setUserRole(role);
+  }, [modal]);
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* Route 1: Landing Page */}
+        {/* --- ROUTES PUBLIQUES --- */}
         <Route
           path="/"
           element={
@@ -37,39 +69,50 @@ export default function App() {
           }
         />
 
-        {/* Route 2: Student Home Page */}
-        <Route path="/home" element={<HomePage />} />
+        {/* --- ROUTES PROTÉGÉES (Livrées avec la prop 'role') --- */}
+        
+        {/* Dashboard commun (Student & Teacher partagent souvent /home) */}
+        <Route path="/home" element={<HomePage role={userRole} />} />
+        
+        {/* Entreprises & Opportunités */}
+        <Route path="/companies" element={<CompaniesDashboard role={userRole} />} />
+        <Route path="/opportunities" element={<OpportunitiesPage role={userRole} />} />
+        <Route path="/opportunities/:id" element={<OpportunityDetailPage role={userRole} />} />
 
-        {/* Route 3: Companies Dashboard */}
-        <Route path="/companies" element={<CompaniesDashboard />} />
+        {/* Espace ÉTUDIANT */}
+        <Route path="/demandes" element={<StudentDemandesPage role={userRole} />} />
+        <Route path="/profile" element={<StudentProfile role={userRole} />} />
 
-        {/* Route Admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        {/* Espace ENSEIGNANT (Teacher) */}
+        <Route path="/teacher/demandes" element={<TeacherDemandesPage role={userRole} />} />
 
-        {/* Route Dashboard Entreprise (Privé) */}
-        <Route path="/company-dashboard" element={<CompanyDashboard />} />
-        <Route path="/company-dashboard/talents" element={<TalentsPage />} />
+        {/* Espace ENTREPRISE (Company) */}
+        <Route path="/company-dashboard" element={<CompanyDashboard role={userRole} />} />
+        <Route path="/company-dashboard/talents" element={<TalentsPage role={userRole} />} />
+        <Route path="/company-dashboard/opportunities/:id/applications" element={<CompanyApplicationsPage role={userRole} />} />
 
-        {/* Route 4: AI Recommendations Page */}
-        <Route path="/opportunities" element={<OpportunitiesPage />} />
-        {/* Route 5: Opportunity Detail (Student) */}
-        <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
+        {/* Autres / Admin */}
+        <Route path="/reports" element={<Reports role={userRole} />} />
+        <Route path="/admin" element={<AdminDashboard role={userRole} />} />
 
-        {/* Route 6: Company Applications for an opportunity */}
-        <Route path="/company-dashboard/opportunities/:id/applications" element={<CompanyApplicationsPage />} />
-
-        {/* REPORT PFE */}
-        <Route path="/reports" element={<Reports />} />
-
-        {/* Student Profile Settings */}
-        <Route path="/profile" element={<StudentProfile />} />
+        {/* Redirection automatique vers l'accueil si la route n'existe pas */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Global Modals for Login/Signup */}
+      {/* --- GESTION DES MODALS (LOGIN / REGISTER) --- */}
       {modal === 'company' ? (
         <CompanyRegisterModal onClose={() => setModal(null)} />
       ) : (
-        modal && <Modal mode={modal} onClose={() => setModal(null)} />
+        modal && (
+          <Modal 
+            mode={modal} 
+            onClose={() => {
+              setModal(null);
+              // On rafraîchit immédiatement le rôle pour que la Sidebar se mette à jour sans F5
+              setUserRole(getRoleFromToken());
+            }} 
+          />
+        )
       )}
     </BrowserRouter>
   );

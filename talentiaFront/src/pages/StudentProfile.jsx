@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 const API = 'http://127.0.0.1:8000/student';
 
 export default function StudentProfile() {
@@ -112,7 +121,7 @@ export default function StudentProfile() {
           </div>
         )}
 
-        <form onSubmit={handleSave} style={{ background: '#fff', padding: 32, borderRadius: 24, border: '1px solid #e5e7eb', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <form onSubmit={handleSave} style={{ background: '#fff', padding: 32, borderRadius: 24, border: '1px solid #eee', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#1f2937' }}>Informations de base</h2>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
@@ -183,7 +192,15 @@ export default function StudentProfile() {
               <button type="button" onClick={() => removeItem('skills', index)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '0 16px', borderRadius: 10, cursor: 'pointer', fontWeight: 'bold' }}>X</button>
             </div>
           ))}
-          <button type="button" onClick={() => addItem('skills')} style={{ color: '#0d9488', background: '#f0fdfa', border: '1px solid #ccfbf1', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}>+ Ajouter une compétence</button>
+          <button type="button" onClick={() => addItem('skills')} style={{ color: COLORS.blueMain, background: 'rgba(99, 145, 185, 0.08)', border: `1px solid rgba(99, 145, 185, 0.2)`, padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 32, transition: 'all .2s' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(99, 145, 185, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(99, 145, 185, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(99, 145, 185, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(99, 145, 185, 0.2)';
+            }}>+ Ajouter une compétence</button>
 
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#1f2937' }}>Langues</h2>
           {profile?.languages?.map((item, index) => (
@@ -198,19 +215,28 @@ export default function StudentProfile() {
               <button type="button" onClick={() => removeItem('languages', index)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '0 16px', borderRadius: 10, cursor: 'pointer', fontWeight: 'bold' }}>X</button>
             </div>
           ))}
-          <button type="button" onClick={() => addItem('languages')} style={{ color: '#0d9488', background: '#f0fdfa', border: '1px solid #ccfbf1', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}>+ Ajouter une langue</button>
+          <button type="button" onClick={() => addItem('languages')} style={{ color: COLORS.blueMain, background: 'rgba(99, 145, 185, 0.08)', border: `1px solid rgba(99, 145, 185, 0.2)`, padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 32, transition: 'all .2s' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(99, 145, 185, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(99, 145, 185, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(99, 145, 185, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(99, 145, 185, 0.2)';
+            }}>+ Ajouter une langue</button>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #e5e7eb', paddingTop: 24 }}>
             <button type="submit" disabled={saving} style={{
-              background: '#0d9488', color: '#fff', border: 'none', padding: '12px 32px', borderRadius: 12,
-              fontWeight: 600, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s'
+              background: COLORS.blueMain, color: '#fff', border: 'none', padding: '12px 32px', borderRadius: 12,
+              fontWeight: 600, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s',
+              boxShadow: saving ? 'none' : `0 4px 12px rgba(99, 145, 185, 0.2)`
             }}>
               {saving ? 'Sauvegarde...' : 'Enregistrer les modifications'}
             </button>
           </div>
         </form>
 
-        <div style={{ background: '#fff0f0', padding: '1.5rem', borderRadius: 24, border: '1px solid #fee2e2', marginTop: 32 }}>
+        <div style={{ background: '#fff0f0', padding: '1.5rem', borderRadius: 24, border: '1px solid #fee2e2', marginTop: 32, boxShadow: '0 2px 8px rgba(239, 68, 68, 0.05)' }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#991b1b', marginBottom: 8 }}>Zone de danger</h3>
           <p style={{ fontSize: 13, color: '#b91c1c', marginBottom: 16 }}>La suppression de votre compte est irréversible. Toutes vos données seront effacées.</p>
           <button onClick={handleDeleteAccount} style={{ color: '#dc2626', background: '#fff', border: '1px solid #fecaca', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Supprimer mon compte</button>
@@ -221,4 +247,15 @@ export default function StudentProfile() {
 }
 
 const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: '#4b5563', marginBottom: 6 };
-const inputStyle = { width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: 10, fontSize: 14, outline: 'none', background: '#f9fafb', color: '#111827', boxSizing: 'border-box' };
+const inputStyle = { 
+  width: '100%', 
+  padding: '12px', 
+  border: '1px solid #e5e7eb', 
+  borderRadius: 10, 
+  fontSize: 14, 
+  outline: 'none', 
+  background: '#f9fafb', 
+  color: '#111827', 
+  boxSizing: 'border-box',
+  transition: 'all 0.2s'
+};

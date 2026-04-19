@@ -4,6 +4,15 @@ import Logo from '../ui/Logo';
 import Button from '../ui/Button';
 import CompanyProgressBar from './steps_company/CompanyProgressBar';
 
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 // Import Company Steps
 import StepCompanyExtraction from './steps_company/StepCompanyExtraction';
 import StepCompanyBasics from './steps_company/StepCompanyBasics';
@@ -138,16 +147,18 @@ export default function CompanyRegisterModal({ onClose }) {
               onClick={() => setIsLogin(false)}
               style={{ 
                 padding: '10px 0', flex: 1, background: 'none', border: 'none', 
-                borderBottom: !isLogin ? '3px solid #0d9488' : '3px solid transparent',
-                fontWeight: 600, color: !isLogin ? '#0a0a12' : '#9ca3af', cursor: 'pointer' 
+                borderBottom: !isLogin ? `3px solid ${COLORS.blueMain}` : '3px solid transparent',
+                fontWeight: 600, color: !isLogin ? '#0a0a12' : '#9ca3af', cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
             >Inscription</button>
             <button 
               onClick={() => setIsLogin(true)}
               style={{ 
                 padding: '10px 0', flex: 1, background: 'none', border: 'none', 
-                borderBottom: isLogin ? '3px solid #0d9488' : '3px solid transparent',
-                fontWeight: 600, color: isLogin ? '#0a0a12' : '#9ca3af', cursor: 'pointer' 
+                borderBottom: isLogin ? `3px solid ${COLORS.blueMain}` : '3px solid transparent',
+                fontWeight: 600, color: isLogin ? '#0a0a12' : '#9ca3af', cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
             >Connexion</button>
           </div>

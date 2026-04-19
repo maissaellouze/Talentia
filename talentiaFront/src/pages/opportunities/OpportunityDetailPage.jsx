@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const getSectorColor = (sector) => {
@@ -17,7 +26,7 @@ const getSectorColor = (sector) => {
     return { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', dot: '#16a34a' };
   if (s.includes('data') || s.includes('cloud') || s.includes('devops'))
     return { bg: '#fdf4ff', text: '#9333ea', border: '#e9d5ff', dot: '#9333ea' };
-  return { bg: '#f0fdfa', text: '#0d9488', border: '#ccfbf1', dot: '#0d9488' };
+  return { bg: '#f0fdfa', text: '#6391B9', border: '#ccfbf1', dot: '#6391B9' };
 };
 
 // ─── Star Rating ──────────────────────────────────────────────────────────────
@@ -84,7 +93,7 @@ function CommentCard({ comment }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
             width: 42, height: 42, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0d9488, #0f2027)',
+            background: 'linear-gradient(135deg, #6391B9, #0f2027)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0,
           }}>
@@ -104,7 +113,7 @@ function CommentCard({ comment }) {
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {[
-          { id: 'like', label: liked ? '👍 Aimé' : '👍 J\'aime', active: liked, onClick: handleLike, activeColor: '#0d9488' },
+          { id: 'like', label: liked ? '👍 Aimé' : '👍 J\'aime', active: liked, onClick: handleLike, activeColor: '#6391B9' },
           { id: 'dislike', label: disliked ? '👎 Pas aimé' : '👎 Je n\'aime pas', active: disliked, onClick: handleDislike, activeColor: '#f97316' },
           { id: 'reply', label: '💬 Répondre', active: showReply, onClick: () => setShowReply(s => !s), activeColor: '#6366f1' },
           { id: 'report', label: reported ? '🚩 Signalé' : '🚩 Signaler', active: reported, onClick: handleReport, activeColor: '#ef4444' },
@@ -140,13 +149,13 @@ function CommentCard({ comment }) {
               fontFamily: 'inherit', boxSizing: 'border-box', lineHeight: 1.6,
               transition: 'border-color 0.2s',
             }}
-            onFocus={e => e.target.style.borderColor = '#0d9488'}
+            onFocus={e => e.target.style.borderColor = '#6391B9'}
             onBlur={e => e.target.style.borderColor = '#e5e5ec'}
           />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button onClick={publishReply} style={{
               padding: '8px 18px', borderRadius: 10, border: 'none',
-              background: '#0d9488', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              background: '#6391B9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}>
               Publier
             </button>
@@ -165,7 +174,7 @@ function CommentCard({ comment }) {
         <div style={{ marginTop: 14, paddingLeft: 20, borderLeft: '3px solid #f0fdfa', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {replies.map(r => (
             <div key={r.id} style={{ background: '#f9fafb', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0d9488', marginBottom: 4 }}>{r.author} · {r.date}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6391B9', marginBottom: 4 }}>{r.author} · {r.date}</div>
               <div style={{ fontSize: 13, color: '#374151' }}>{r.text}</div>
             </div>
           ))}
@@ -315,10 +324,10 @@ export default function OpportunityDetailPage() {
           from { opacity: 0; transform: translateX(-12px); }
           to   { opacity: 1; transform: none; }
         }
-        .apply-btn:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,.35) !important; }
+        .apply-btn:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99, 145, 185,.35) !important; }
         .apply-btn:active { transform: translateY(0); }
-        .back-link:hover { color: #0d9488 !important; }
-        .opp-detail-comment:focus { outline: none; border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13,148,136,.12) !important; }
+        .back-link:hover { color: #6391B9 !important; }
+        .opp-detail-comment:focus { outline: none; border-color: #6391B9 !important; box-shadow: 0 0 0 3px rgba(99, 145, 185,.12) !important; }
       `}</style>
 
       <MainLayout>
@@ -357,7 +366,7 @@ export default function OpportunityDetailPage() {
               }}>
                 {/* Decoration blobs */}
                 <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,.22), transparent 65%)', pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', bottom: -30, left: '35%', width: 150, height: 150, borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.14), transparent 65%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: -30, left: '35%', width: 150, height: 150, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99, 145, 185,.14), transparent 65%)', pointerEvents: 'none' }} />
 
                 {/* Company logo + name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -419,7 +428,7 @@ export default function OpportunityDetailPage() {
                 {/* ── Description ─────────────────── */}
                 <section style={{ marginBottom: 28 }}>
                   <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0a0a12', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 4, height: 18, background: '#0d9488', borderRadius: 4, display: 'inline-block' }} />
+                    <span style={{ width: 4, height: 18, background: '#6391B9', borderRadius: 4, display: 'inline-block' }} />
                     Description du poste
                   </h2>
                   <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-line' }}>
@@ -489,7 +498,7 @@ export default function OpportunityDetailPage() {
                         background: '#f0fdfa', borderRadius: 14, border: '1.5px solid #ccfbf1',
                         padding: '16px 20px',
                       }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6391B9', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                           Rémunération
                         </div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: '#0a0a12' }}>
@@ -497,7 +506,7 @@ export default function OpportunityDetailPage() {
                             ? `${opp.salary_min}–${opp.salary_max} DT`
                             : opp.salary_min ? `À partir de ${opp.salary_min} DT` : `Jusqu'à ${opp.salary_max} DT`}
                         </div>
-                        <div style={{ fontSize: 12, color: '#0d9488', marginTop: 4 }}>par mois</div>
+                        <div style={{ fontSize: 12, color: '#6391B9', marginTop: 4 }}>par mois</div>
                       </div>
                     )}
                   </div>
@@ -506,7 +515,7 @@ export default function OpportunityDetailPage() {
                   <div style={{ marginBottom: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: '#6b7280', fontWeight: 600 }}>
                       <span>Progression des sélections</span>
-                      <span style={{ color: filledPct >= 80 ? '#ef4444' : '#0d9488' }}>{filledPct}%</span>
+                      <span style={{ color: filledPct >= 80 ? '#ef4444' : '#6391B9' }}>{filledPct}%</span>
                     </div>
                     <div style={{ height: 8, borderRadius: 8, background: '#f3f4f6', overflow: 'hidden' }}>
                       <div style={{
@@ -514,7 +523,7 @@ export default function OpportunityDetailPage() {
                         borderRadius: 8,
                         background: filledPct >= 80
                           ? 'linear-gradient(90deg, #f97316, #ef4444)'
-                          : 'linear-gradient(90deg, #0d9488, #14b8a6)',
+                          : 'linear-gradient(90deg, #6391B9, #14b8a6)',
                         transition: 'width 0.8s ease',
                       }} />
                     </div>
@@ -535,12 +544,12 @@ export default function OpportunityDetailPage() {
                     width: '100%', padding: '16px', borderRadius: 14, border: 'none',
                     background: applied
                       ? 'linear-gradient(135deg, #16a34a, #15803d)'
-                      : 'linear-gradient(135deg, #0d9488, #0f2027)',
+                      : 'linear-gradient(135deg, #6391B9, #0f2027)',
                     color: '#fff', fontSize: 16, fontWeight: 700,
                     cursor: applied ? 'default' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     transition: 'all 0.22s ease',
-                    boxShadow: '0 4px 18px rgba(13,148,136,.25)',
+                    boxShadow: '0 4px 18px rgba(99, 145, 185,.25)',
                     letterSpacing: '-0.01em',
                   }}
                 >
@@ -554,7 +563,7 @@ export default function OpportunityDetailPage() {
                 </button>
 
                 {applied && (
-                  <p style={{ textAlign: 'center', margin: '12px 0 0', fontSize: 13, color: '#0d9488', fontWeight: 500 }}>
+                  <p style={{ textAlign: 'center', margin: '12px 0 0', fontSize: 13, color: '#6391B9', fontWeight: 500 }}>
                     Votre candidature a été transmise à l'entreprise. Bonne chance ! 🎉
                   </p>
                 )}
@@ -631,12 +640,12 @@ export default function OpportunityDetailPage() {
                     placeholder="Partagez votre expérience avec cette entreprise…"
                     style={{
                       width: '100%', minHeight: commentFocused ? 120 : 90,
-                      borderRadius: 12, border: `1.5px solid ${commentFocused ? '#0d9488' : '#e5e5ec'}`,
+                      borderRadius: 12, border: `1.5px solid ${commentFocused ? '#6391B9' : '#e5e5ec'}`,
                       padding: '14px 16px', fontSize: 14, resize: 'vertical', outline: 'none',
                       fontFamily: 'inherit', boxSizing: 'border-box', lineHeight: 1.7,
                       background: '#fff',
                       transition: 'border-color 0.2s, min-height 0.25s, box-shadow 0.2s',
-                      boxShadow: commentFocused ? '0 0 0 3px rgba(13,148,136,.1)' : 'none',
+                      boxShadow: commentFocused ? '0 0 0 3px rgba(99, 145, 185,.1)' : 'none',
                     }}
                   />
 
@@ -648,7 +657,7 @@ export default function OpportunityDetailPage() {
                       borderRadius: 12, border: 'none',
                       background: publishLoading || !newComment.trim()
                         ? '#e5e5ec'
-                        : 'linear-gradient(135deg, #0d9488, #0f766e)',
+                        : 'linear-gradient(135deg, #6391B9, #0f766e)',
                       color: publishLoading || !newComment.trim() ? '#9ca3af' : '#fff',
                       fontSize: 14, fontWeight: 700, cursor: publishLoading || !newComment.trim() ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', gap: 8,

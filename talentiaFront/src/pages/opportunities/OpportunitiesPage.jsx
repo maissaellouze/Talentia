@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const getSectorColor = (sector) => {
@@ -17,7 +26,7 @@ const getSectorColor = (sector) => {
     return { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', dot: '#16a34a' };
   if (s.includes('data') || s.includes('cloud') || s.includes('devops'))
     return { bg: '#fdf4ff', text: '#9333ea', border: '#e9d5ff', dot: '#9333ea' };
-  return { bg: '#f0fdfa', text: '#0d9488', border: '#ccfbf1', dot: '#0d9488' };
+  return { bg: '#f0fdfa', text: '#6391B9', border: '#ccfbf1', dot: '#6391B9' };
 };
 
 const getMatchBadge = (score) => {
@@ -74,9 +83,9 @@ function OpportunityCard({ item, index, onView }) {
         background: '#fff',
         borderRadius: 16,
         border: hovered
-          ? '2px solid #0d9488'
+          ? `2px solid ${COLORS.blueMain}`
           : isHighlighted
-            ? '2px solid #0d9488'
+            ? `2px solid ${COLORS.blueMain}`
             : '1.5px solid #e5e5ec',
         padding: hovered || isHighlighted ? '23.5px' : '24px', // compensate 0.5px border diff
         display: 'flex',
@@ -84,7 +93,7 @@ function OpportunityCard({ item, index, onView }) {
         gap: 12,
         transition: 'all 0.22s ease',
         boxShadow: hovered
-          ? '0 8px 28px rgba(13,148,136,.15), 0 2px 8px rgba(13,148,136,.08)'
+          ? `0 8px 28px rgba(99, 145, 185, 0.2), 0 2px 8px rgba(99, 145, 185, 0.1)`
           : '0 2px 8px rgba(0,0,0,.04)',
         transform: hovered ? 'translateY(-4px)' : 'none',
         cursor: 'default',
@@ -160,9 +169,9 @@ function OpportunityCard({ item, index, onView }) {
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '9px 16px', borderRadius: 10,
-            border: '1.5px solid #0d9488',
-            background: hovered || isHighlighted ? '#0d9488' : 'transparent',
-            color: hovered || isHighlighted ? '#fff' : '#0d9488',
+            border: '1.5px solid #6391B9',
+            background: hovered || isHighlighted ? '#6391B9' : 'transparent',
+            color: hovered || isHighlighted ? '#fff' : '#6391B9',
             fontSize: 13, fontWeight: 600, cursor: 'pointer',
             transition: 'all 0.2s',
           }}
@@ -176,7 +185,7 @@ function OpportunityCard({ item, index, onView }) {
             background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#f0fdfa'; e.currentTarget.style.borderColor = '#0d9488'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#f0fdfa'; e.currentTarget.style.borderColor = '#6391B9'; }}
           onMouseLeave={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#e5e5ec'; }}
         >
           🔖
@@ -281,12 +290,12 @@ const OpportunitiesPage = () => {
         }
         .opp-search:focus {
           outline: none;
-          border-color: #0d9488 !important;
-          box-shadow: 0 0 0 3px rgba(13,148,136,.12) !important;
+          border-color: #6391B9 !important;
+          box-shadow: 0 0 0 3px rgba(99, 145, 185,.12) !important;
         }
         .opp-select:focus {
           outline: none;
-          border-color: #0d9488 !important;
+          border-color: #6391B9 !important;
         }
       `}</style>
 
@@ -296,7 +305,7 @@ const OpportunitiesPage = () => {
             {/* ── Hero Banner ─────────────────────────────────────── */}
             <div style={{
               borderRadius: 20,
-              background: 'linear-gradient(135deg, #0f2027 0%, #0d4f47 50%, #1a6b5e 100%)',
+              background: 'linear-gradient(135deg, #1e1e2e 0%, #2B547E 50%, #6391B9 100%)',
               padding: '40px 48px',
               marginBottom: 28,
               position: 'relative',
@@ -311,7 +320,7 @@ const OpportunitiesPage = () => {
               }} />
               <div style={{
                 position: 'absolute', bottom: -40, left: '40%', width: 200, height: 200,
-                borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.15), transparent 65%)',
+                borderRadius: '50%', background: 'radial-gradient(circle, rgba(99, 145, 185,.15), transparent 65%)',
                 pointerEvents: 'none'
               }} />
 
@@ -387,9 +396,9 @@ const OpportunitiesPage = () => {
                   style={{
                     padding: '10px 22px', borderRadius: 12, border: 'none', cursor: 'pointer',
                     fontWeight: 700, fontSize: 14, transition: 'all 0.2s',
-                    background: activeTab === tab.id ? '#0d9488' : '#fff',
+                    background: activeTab === tab.id ? '#6391B9' : '#fff',
                     color: activeTab === tab.id ? '#fff' : '#6b7280',
-                    boxShadow: activeTab === tab.id ? '0 4px 14px rgba(13,148,136,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
+                    boxShadow: activeTab === tab.id ? '0 4px 14px rgba(99, 145, 185,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
                     border: activeTab === tab.id ? 'none' : '1.5px solid #e5e5ec',
                   }}
                 >{tab.label}</button>

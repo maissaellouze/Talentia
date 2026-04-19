@@ -3,6 +3,16 @@ import CompanyCard from "../components/companies/CompanyCard";
 import CompaniesFilter from "../components/companies/CompaniesFilter";
 import CompanyModal from "../components/companies/CompanyModal";
 import MainLayout from "../components/layout/MainLayout";
+
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 const CompaniesDashboard = () => {
@@ -139,12 +149,12 @@ const CompaniesDashboard = () => {
       {/* Background Decorators */}
       <div style={{
         position: 'absolute', top: -200, right: -150, width: 700, height: 700,
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.1), transparent 65%)',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(99, 145, 185,.1), transparent 65%)',
         pointerEvents: 'none', zIndex: 0
       }} />
       <div style={{
         position: 'absolute', bottom: -80, left: -80, width: 450, height: 450,
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,.05), transparent 65%)',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(99, 145, 185,.05), transparent 65%)',
         pointerEvents: 'none', zIndex: 0
       }} />
 
@@ -159,7 +169,7 @@ const CompaniesDashboard = () => {
         {/* ── Hero Banner ─────────────────────────────────────── */}
         <div style={{
           borderRadius: 20,
-          background: 'linear-gradient(135deg, #0f2027 0%, #0d4f47 50%, #1a6b5e 100%)',
+          background: 'linear-gradient(135deg, #1e1e2e 0%, #2B547E 50%, #6391B9 100%)',
           padding: '40px 48px',
           marginBottom: 28,
           position: 'relative',
@@ -325,7 +335,7 @@ const CompaniesDashboard = () => {
                 <button 
                   onClick={clearFilters}
                   style={{ 
-                    marginTop: 24, padding: '12px 24px', background: '#0d9488', 
+                    marginTop: 24, padding: '12px 24px', background: '#6391B9', 
                     color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600,
                     cursor: 'pointer', fontSize: 14 
                   }}
@@ -373,8 +383,8 @@ const CompaniesDashboard = () => {
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               height: 40, padding: '0 20px', borderRadius: 12,
-              background: '#0d9488', color: '#fff', fontSize: 14, fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(13,148,136,.25)'
+              background: '#6391B9', color: '#fff', fontSize: 14, fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(99, 145, 185,.25)'
             }}>
               {page} / {totalPages}
             </div>

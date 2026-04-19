@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.models.recommendation import RecommendationRequest
 from app.database import get_db
 from app.models.student import Student
 from app.models.user import User
@@ -114,3 +115,5 @@ def get_my_applications(student_id: int, db: Session = Depends(get_db)):
             "submitted_at": app.submitted_at.strftime("%Y-%m-%d") if app.submitted_at else "Inconnue",
         })
     return results
+
+

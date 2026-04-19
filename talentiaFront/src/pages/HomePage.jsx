@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 
+// ─── COULEURS ISSAT ───────────────────────────────────────────────────────────
+const COLORS = {
+  blueMain: '#6391B9',    // Bleu ISSAT
+  blueDark: '#2B547E',    // Bleu foncé
+  bgDark: '#1e1e2e',      // Fond sombre
+  grayText: '#6b7280',
+  white: '#ffffff'
+};
+
 export default function HomePage() {
   const navigate = useNavigate();
   const userName = localStorage.getItem('name') || localStorage.getItem('userName') || 'Étudiant';
@@ -72,7 +81,9 @@ export default function HomePage() {
               <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#1f2937' }}>Vos Candidatures</h3>
               <button 
                 onClick={() => navigate('/opportunities')}
-                style={{ background: 'none', border: 'none', color: '#0d9488', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: COLORS.blueMain, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all .2s' }}
+                onMouseEnter={(e) => e.target.style.transform = 'translateX(4px)'}
+                onMouseLeave={(e) => e.target.style.transform = 'translateX(0)'}
               >
                 Voir tout →
               </button>
@@ -86,12 +97,17 @@ export default function HomePage() {
                   const s = STATUS_MAP[app.status] || STATUS_MAP.pending;
                   return (
                     <div key={app.id} style={{ 
-                      background: '#fff', padding: '1.25rem', borderRadius: 20, border: '1px solid #f1f5f9',
+                      background: '#fff', padding: '1.25rem', borderRadius: 20, border: '1px solid #eee',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      transition: 'transform 0.2s', cursor: 'pointer'
-                    }} onClick={() => navigate(`/opportunities/${app.opportunity_id}`)}>
+                      transition: 'all 0.2s', cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,.04)',
+                      hover: { boxShadow: `0 4px 12px rgba(99, 145, 185, 0.1)` }
+                    }} 
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 4px 12px rgba(99, 145, 185, 0.1)`}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.04)'}
+                    onClick={() => navigate(`/opportunities/${app.opportunity_id}`)}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💼</div>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(99, 145, 185, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💼</div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#111827', fontSize: 15 }}>{app.opportunity_title}</div>
                           <div style={{ fontSize: 13, color: '#6b7280' }}>{app.company_name}</div>
@@ -120,7 +136,9 @@ export default function HomePage() {
               <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#1f2937' }}>Recommandations IA</h3>
               <button 
                 onClick={() => navigate('/opportunities')}
-                style={{ background: 'none', border: 'none', color: '#0d9488', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: COLORS.blueMain, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all .2s' }}
+                onMouseEnter={(e) => e.target.style.transform = 'translateX(4px)'}
+                onMouseLeave={(e) => e.target.style.transform = 'translateX(0)'}
               >
                 Explorer →
               </button>
@@ -134,20 +152,24 @@ export default function HomePage() {
                   const score = Math.round(item.score * 100);
                   return (
                     <div key={item.internship?.id} style={{ 
-                      background: '#fff', padding: '1.25rem', borderRadius: 20, border: '1px solid #f1f5f9',
+                      background: '#fff', padding: '1.25rem', borderRadius: 20, border: '1px solid #eee',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      transition: 'transform 0.2s', cursor: 'pointer'
-                    }} onClick={() => navigate(`/opportunities/${item.internship?.id}`)}>
+                      transition: 'all 0.2s', cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,.04)'
+                    }} 
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 4px 12px rgba(99, 145, 185, 0.1)`}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.04)'}
+                    onClick={() => navigate(`/opportunities/${item.internship?.id}`)}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✨</div>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(99, 145, 185, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✨</div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#111827', fontSize: 15 }}>{item.internship?.title}</div>
                           <div style={{ fontSize: 13, color: '#6b7280' }}>{item.internship?.company_name} · {item.internship?.location}</div>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: '#3b82f6' }}>{score}%</div>
-                        <div style={{ fontSize: 10, color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase' }}>Match</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.blueMain }}>{score}%</div>
+                        <div style={{ fontSize: 10, color: COLORS.grayText, fontWeight: 700, textTransform: 'uppercase' }}>Match</div>
                       </div>
                     </div>
                   );
